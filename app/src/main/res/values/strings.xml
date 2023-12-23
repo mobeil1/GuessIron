@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">GuessIron</string>
+    <string name="hello">Hello</string>
+    <string name="measured">Measured</string>
+    <string name="calibration">Calibration</string>
+    <string name="continue_without_calibration">Continue without calibration</string>
+    <string name="disclaimer_info">GuessIron can help you, if you don\'t have a ruler</string>
+    <string name="calibration_info">It may be that the measurements on your cell phone are still a little inaccurate. You should calibrate GuessIron first!</string>
+    <string name="Save">Save</string>
+    <string name="Cancel">Cancel</string>
+    <string name="Back">Back</string>
+    <string name="Ok">OK</string>
+    <string name="Name">Name</string>
+    <string name="Distance">Distance</string>
+    <string name="Name_example">Screw</string>
+    <string name="Save_Measured_Text">Save the measured value</string>
+    <string name="Show">Show</string>
+    <string name="Measured_Value_Saved">Measured value saved</string>
+    <string name="Rename">Rename</string>
+    <string name="Delete">Delete</string>
+    <string name="Edit">Edit</string>
+    <string name="SortAlphabetic">Sort alphabetic</string>
+    <string name="SortTimestamp">Sort by time</string>
+    <string name="Empty_Placeholder">Empty</string>
+    <string name="Ask_For_Distance">"Enter the size of the item you want to use for calibration"</string>
+    <string name="SwitchScala">Switch scale</string>
+    <string name="SaveMeasuredValue">Save measured value</string>
+    <string name="StartCalibration">Start calibration</string>
+    <string name="ShowMeasuredValues">Show measured values</string>
+    <string name="AskHowToCalibrate">How would you like to calibrate?</string>
+    <string name="WithARuler">With a ruler</string>
+    <string name="WithACreditcard">With a credit card</string>
+    <string name="WithAnotherItem">With another item</string>
+    <string name="ResetCalibration">Reset calibration</string>
+    <string name="DragTheScala">Drag the scale</string>
+    <string name="InstructionsCalibrateWithRuler">Move the scale until the size of the scale matches the scale of your ruler</string>
+    <string name="InstructionsCalibrateWithCreditcard">Move the scale until the size of the marked area matches the short side of your bank card or ID card</string>
+    <string name="InstructionsCalibrateWithDifferentItem">Move the scale until the size of the marked area matches the size of your item</string>
+    <string name="Creditcard">Credit card</string>
+    <string name="Item">Item</string>
+    <string name="Factor">Factor</string>
+    <string name="NoMeasuredValues">no measurements saved</string>
+
+</resources>

@@ -1,0 +1,6 @@
+Verwandle dein Handy in ein Lineal
+
+* Die Ausrichtung der Skala kann geändert werden ( Oben, Unten oder Mitti g)
+* Kalibrieren mit einem Lineal, einer Bankkarte oder einen anderen beliebiegen Gegenstand
+* Messwerte speichern
+* Messwerte wiederherstellen
