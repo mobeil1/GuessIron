@@ -5,7 +5,7 @@
     <string name="hello">Hallo</string>
     <string name="measured">Gemessen</string>
     <string name="calibration">Kalibrieren</string>
-    <string name="continue_without_calibration">Witer ohne Kalibrierung</string>
+    <string name="continue_without_calibration">Weiter, ohne Kalibrierung</string>
     <string name="disclaimer_info">Wenn Sie gerade kein Lineal zur Hand haben, hilft Ihnen GuessIron weiter.</string>
     <string name="calibration_info">Es kann sein, dass die Messungen auf Ihrem Handy noch etwas ungenau sind. Daher sollten Sie GuessIron zuerst kalibrieren!</string>
     <string name="Save">Speichern</string>
