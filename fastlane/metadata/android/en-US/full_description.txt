@@ -1,6 +1,6 @@
 Measure things with your cell phone
 
-* The direction of the scale con be changed (Top, Bottom or Center)
+* The direction of the scale can be changed (Top, Bottom or Center)
 * Calibrate the scale with a ruler, a card (e.g. Creditcard) or any other kind of item
 * Save the measured values
 * Restore the measured values
