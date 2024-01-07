@@ -1,5 +1,6 @@
 package de.indie42.guessiron
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -9,6 +10,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -34,7 +36,10 @@ fun ScalaBar(
 
     ) {
 
-    val scalaCalculator = ScalaCalculator(direction, scalaPosition, scalaFactor)
+    val configuration = LocalConfiguration.current
+    val isLandsacpe = Configuration.ORIENTATION_LANDSCAPE == configuration.orientation
+
+    val scalaCalculator = ScalaCalculator(direction, scalaPosition, scalaFactor, isLandsacpe)
 
     var measuredOffset = measureOffset
     if (measuredMM > 0)
@@ -60,62 +65,87 @@ fun ScalaLines(measureOffset: Offset, scalaColor: Color, scalaCalculator: ScalaC
 
     val dpmm = scalaCalculator.dpmm
 
-    //val isLandscape = Configuration.ORIENTATION_LANDSCAPE == Resources.getSystem().configuration.orientation
-
     Canvas(modifier = Modifier.fillMaxSize()) {
 
         val lineStartX = scalaCalculator.getScalaStartX(size)
 
         var startMeasured = measureOffset.y
-        //if (scalaCalculator.scalaDirection == ScalaDirection.Bottom)
-        //    startMeasured = size.height - startMeasured
+
+        val scaleLengthInPixel = scalaCalculator.getScaleLengthInPixel(size)
+
         if (scalaCalculator.scalaDirection == ScalaDirection.Center) {
             val centerMeasured = measureOffset.y / 2F
-            val centerScreen = size.height / 2F
+            val centerScreen = scaleLengthInPixel / 2F
             startMeasured = centerScreen - centerMeasured // - scalaCalculator.directionOffset(size).y
         }
 
         // Messdaten anzeigen
+        val measuredSizeLeft = if ( scalaCalculator.isLandsacpe )
+                Size( measureOffset.y, dpmm * 8)
+            else
+                Size(dpmm * 8, measureOffset.y)
+
+        val measuredSizeRight = if ( scalaCalculator.isLandsacpe )
+            Size(measureOffset.y, dpmm * 8 * -1)
+        else
+            Size(dpmm * 8 * -1, measureOffset.y)
+
         if (scalaCalculator.scalaDirection == ScalaDirection.Bottom) {
+
+            val topLeft = if (scalaCalculator.isLandsacpe)
+                Offset(x = scaleLengthInPixel - measureOffset.y, y = lineStartX )
+            else
+                Offset(x = lineStartX, y = scaleLengthInPixel - measureOffset.y)
+
             if (scalaCalculator.scalaPosition == ScalaPosition.Left)
                 drawRect(
                     measureColor,
-                    Offset(x = lineStartX, y = size.height-measureOffset.y),
-                    size = Size(dpmm * 8, measureOffset.y)
+                    topLeft,
+                    size = measuredSizeLeft
                 )
             else
                 drawRect(
                     measureColor,
-                    Offset(x = lineStartX, y = size.height-measureOffset.y),
-                    size = Size(dpmm * 8 * -1, measureOffset.y)
+                    topLeft,
+                    size = measuredSizeRight
                 )
         } else {
+            val topLeftCenter = if (scalaCalculator.isLandsacpe)
+                Offset(x = startMeasured, y = lineStartX)
+            else
+                Offset(x = lineStartX, y = startMeasured)
+
+            val topLeft = if (scalaCalculator.isLandsacpe)
+                Offset(x = 0F, y = lineStartX)
+            else
+                Offset(x = lineStartX, y = 0f)
+
             if (scalaCalculator.scalaPosition == ScalaPosition.Left) {
                 if (scalaCalculator.scalaDirection == ScalaDirection.Center) {
                     drawRect(
                         measureColor,
-                        Offset(x = lineStartX, y = startMeasured),
-                        size = Size(dpmm * 8, measureOffset.y)
+                        topLeftCenter,
+                        size = measuredSizeLeft
                     )
                 } else
                     drawRect(
                         measureColor,
-                        Offset(x = lineStartX, y = 0f),
-                        size = Size(dpmm * 8, measureOffset.y)
+                        topLeft,
+                        size = measuredSizeLeft
                     )
             } else
             {
                 if (scalaCalculator.scalaDirection == ScalaDirection.Center) {
                     drawRect(
                         measureColor,
-                        Offset(x = lineStartX, y = startMeasured),
-                        size = Size(dpmm * 8 * -1, measureOffset.y)
+                        topLeftCenter,
+                        size = measuredSizeRight
                     )
                 } else
                     drawRect(
                         measureColor,
-                        Offset(x = lineStartX, y = 0f),
-                        size = Size(dpmm * 8 * -1, measureOffset.y)
+                        topLeft,
+                        size = measuredSizeRight
                     )
             }
 
@@ -127,18 +157,23 @@ fun ScalaLines(measureOffset: Offset, scalaColor: Color, scalaCalculator: ScalaC
 
             val newLineEnd = scalaCalculator.getScalaLineOffsetEnd(lineCounter = i, drawSize = size)
 
+            val linePosInPixel = if (scalaCalculator.isLandsacpe)
+                    newLineStart.x
+                else
+                    newLineStart.y
+
             var lineColor = measureOnColor
             if (scalaCalculator.scalaDirection == ScalaDirection.Bottom) {
                 lineColor = scalaColor
-                if (newLineStart.y >= size.height - measureOffset.y) {
+                if (linePosInPixel >= scaleLengthInPixel- measureOffset.y) {
                     lineColor = measureOnColor
                 }
             } else if (scalaCalculator.scalaDirection == ScalaDirection.Center) {
 
-                if (newLineStart.y < startMeasured || newLineStart.y >= startMeasured+measureOffset.y)
+                if (linePosInPixel < startMeasured || linePosInPixel >= startMeasured+measureOffset.y)
                     lineColor = scalaColor
 
-            } else if (newLineStart.y >= measureOffset.y) {
+            } else if (linePosInPixel >= measureOffset.y) {
                 lineColor = scalaColor
             }
 
@@ -165,6 +200,9 @@ fun ScalaNumber(scalaCalculator: ScalaCalculator, scalaColor: Color) {
             val absolutePosition = scalaCalculator.getLinePosition(i, size)
 
            if (absolutePosition % 10 == 0 && (absolutePosition > 0 || scalaCalculator.scalaDirection == ScalaDirection.Center)) {
+
+               val lineEndPoint = scalaCalculator.getScalaLineOffsetEnd(i, size)
+
                 val measuredText = textMeasurer.measure(
                     AnnotatedString((absolutePosition / 10).toString()),
                     //style = TextStyle(fontSize = 18.sp)
@@ -174,49 +212,39 @@ fun ScalaNumber(scalaCalculator: ScalaCalculator, scalaColor: Color) {
 
                 val transRotateOffset = 15.dp.toPx()
 
-                var textOffset = 0F
+                var textOffsetFromLineEnd = 0F
                 if (absolutePosition == 0)
-                    textOffset = 25F
+                    textOffsetFromLineEnd = 25F
 
                 var textX = scalaCalculator.dpmm * 8
                 if (scalaCalculator.scalaPosition == ScalaPosition.Right)
-                    textX = size.width - textX - measuredText.size.width - transRotateOffset + (textOffset * -1)
+                    textX = size.width - textX - measuredText.size.width - transRotateOffset + (textOffsetFromLineEnd * -1)
                 else
-                    textX += transRotateOffset + textOffset
+                    textX += transRotateOffset + textOffsetFromLineEnd
 
+               var textY = lineEndPoint.y
 
-                val lineEndPoint = scalaCalculator.getScalaLineOffsetEnd(i, size)
+               if (scalaCalculator.isLandsacpe){
+
+                   textX = lineEndPoint.x - measuredText.size.width/2
+
+                   textY = scalaCalculator.getLineLength(i, size) * scalaCalculator.dpmm
+                   if (scalaCalculator.scalaPosition == ScalaPosition.Right) {
+                       textY = size.height - textY - measuredText.size.height
+                   } else {
+                       textY += transRotateOffset + textOffsetFromLineEnd
+                   }
+               }
+
+               val textOffset = Offset( x = textX, y = textY)
 
                 withTransform({
-//                   if (false /*isLandscape*/) {
-//                       if (scalaCalculator.scalaPosition == ScalaPosition.Right) {
-//                           rotate(
-//                               degrees = -90F,
-//                               pivot = Offset(x = textX, y = lineEndPoint.y)
-//                           )
-//                       } else {
-//                           translate(left = measuredText.size.height + transRotateOffset)
-//                           rotate(
-//                               degrees = 90F,
-//                               pivot = Offset(
-//                                   x = scalaCalculator.dpmm.toFloat() * 8,
-//                                   y = lineEndPoint.y - heightOffset
-//                               )
-//                           )
-//                       }
-//                   } else {
                     translate(top = -heightOffset)
-
-                    //}
                 }) {
                     drawText(
                         measuredText,
-                        topLeft = Offset(
-                            x = textX,
-                            y = lineEndPoint.y
-                        ),
-                        color = scalaColor
-                    )
+                        topLeft = textOffset,
+                        color = scalaColor )
                     }
             }
         }

@@ -1,5 +1,6 @@
 package de.indie42.guessiron
 
+import android.content.res.Configuration
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -19,24 +20,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -46,12 +39,14 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
@@ -61,226 +56,205 @@ import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
 
 
-enum class ScalaCalibrationMode {
-    UnDef, Ruler, Card, UserDef
+enum class ScalaCalibrationMode(val value: Int) {
+    UnDef(0), Ruler(1), Card(2), UserDef(3)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScalaCalibrationScreen(viewModel: GuessIronViewModel, onBack: () -> Unit) {
+fun ScalaCalibrationScreen(mode: Int = 0, viewModel: GuessIronViewModel, onBack: () -> Unit) {
+
+    val caliMode = ScalaCalibrationMode.values().first { it.value == mode }
+
+    val configuration = LocalConfiguration.current
+    val isLandsacpe = Configuration.ORIENTATION_LANDSCAPE == configuration.orientation
 
     val guessIronDataState by viewModel.dataState.collectAsState()
     val guessIronUiState by viewModel.uiState.collectAsState()
 
-    var calibratingDistance by remember { mutableIntStateOf(0) }
-    var caliMode by remember { mutableStateOf(ScalaCalibrationMode.UnDef) }
-    var showInfoDialog by remember { mutableStateOf(false) }
-    var showUserDefDialog by remember { mutableStateOf(false) }
-    var newScalaFactor by remember { mutableFloatStateOf(guessIronDataState.scalaFactor) }
+    var calibratingDistance by rememberSaveable { mutableIntStateOf(0) }
+    var showHowToDialog by rememberSaveable { mutableStateOf(true) }
+    var newScalaFactor by rememberSaveable { mutableFloatStateOf(guessIronDataState.scalaFactor) }
+
+    val scope = rememberCoroutineScope()
 
     val minFactor = 0.5F
     val maxFactor = 3.0F
 
-    val scope = rememberCoroutineScope()
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(),
-                title = {
-                    Text(stringResource(id = R.string.calibration))
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(id = R.string.Back)
-                        )
-                    }
-                },
+    DynamicSystemBar(isLandsacpe)
 
-                )
-        },
-
-        modifier = Modifier.fillMaxSize(),
-    ) { innerPadding ->
-        Surface(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    var switchTopForCenter = 0F
-                    detectDragGestures(onDragStart = { offset ->
-                        switchTopForCenter = offset.y
-                    }) { _, dragAmount ->
-                        var y = when(guessIronUiState.scalaDirection){
-                            ScalaDirection.Top -> dragAmount.y
-                            ScalaDirection.Bottom -> dragAmount.y * -1
-                            ScalaDirection.Center -> if ( switchTopForCenter < size.height/2)
-                                dragAmount.y * -1
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                var switchTopForCenter = 0F
+                detectDragGestures(onDragStart = { offset ->
+                    switchTopForCenter = if (isLandsacpe)
+                        offset.x
+                    else
+                        offset.y
+                }) { _, dragAmount ->
+                    val dragLength = if (isLandsacpe)
+                        dragAmount.x
+                    else
+                        dragAmount.y
+                    val y = when (guessIronUiState.scalaDirection) {
+                        ScalaDirection.Top -> dragLength
+                        ScalaDirection.Bottom -> dragLength * -1
+                        ScalaDirection.Center -> {
+                            val height = if (isLandsacpe)
+                                size.width
                             else
-                                dragAmount.y
-                        }
-                        if (caliMode != ScalaCalibrationMode.UnDef) {
-                            val scalaFactor = newScalaFactor + y / 2000
-                            newScalaFactor = if (scalaFactor < minFactor)
-                                minFactor
-                            else if (scalaFactor > maxFactor)
-                                maxFactor
+                                size.height
+                            if (switchTopForCenter < height / 2)
+                                dragLength * -1
                             else
-                                scalaFactor
+                                dragLength
                         }
-
                     }
-                },
-            color = MaterialTheme.colorScheme.background
+                    if (caliMode != ScalaCalibrationMode.UnDef) {
+                        val scalaFactor = newScalaFactor + y / 2000
+                        newScalaFactor = if (scalaFactor < minFactor)
+                            minFactor
+                        else if (scalaFactor > maxFactor)
+                            maxFactor
+                        else
+                            scalaFactor
+                    }
+
+                }
+            },
+        color = MaterialTheme.colorScheme.background
+    ) {
+        ScalaBar(
+            guessIronUiState.scalaDirection,
+            ScalaPosition.Left,
+            measuredMM = calibratingDistance,
+            scalaFactor = newScalaFactor
+        )
+        ScalaBar(
+            guessIronUiState.scalaDirection,
+            ScalaPosition.Right,
+            measuredMM = calibratingDistance,
+            scalaFactor = newScalaFactor
+        )
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            if (caliMode != ScalaCalibrationMode.UnDef) {
-                ScalaBar(
-                    guessIronUiState.scalaDirection,
-                    ScalaPosition.Left,
-                    measuredMM = calibratingDistance,
-                    scalaFactor = newScalaFactor
-                )
-                ScalaBar(
-                    guessIronUiState.scalaDirection,
-                    ScalaPosition.Right,
-                    measuredMM = calibratingDistance,
-                    scalaFactor = newScalaFactor
-                )
-            }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
 
-                if (caliMode == ScalaCalibrationMode.UnDef) {
+            Text(text = AnnotatedString(text = stringResource(id = R.string.DragTheScala)))
+            Text(
+                text = stringResource(id = R.string.Factor) + ": " + String.format(
+                    "%.2f",
+                    newScalaFactor
+                ),
+                modifier = Modifier.padding(16.dp),
+                style = MaterialTheme.typography.titleMedium,
+            )
 
-                    Text(text = AnnotatedString(text = stringResource(id = R.string.AskHowToCalibrate)))
-
-                    OutlinedButton(onClick = {
-                        caliMode = ScalaCalibrationMode.Ruler
-                        showInfoDialog = true
-                    }) {
-                        Text(text = AnnotatedString(text = stringResource(id = R.string.WithARuler)))
+            if (isLandsacpe){
+                Row (horizontalArrangement = Arrangement.Center) {
+                    OutlinedButton( modifier = Modifier.padding(horizontal = 4.dp), onClick = onBack) {
+                        Text(text = AnnotatedString(text = stringResource(id = R.string.Cancel)))
                     }
-                    OutlinedButton(onClick = {
-                        caliMode = ScalaCalibrationMode.Card
-                        showInfoDialog = true
-                        calibratingDistance = 54
-                    }) {
-                        Text(text = AnnotatedString(text = stringResource(id = R.string.WithACreditcard)))
-                    }
-                    OutlinedButton(onClick = {
-                        showUserDefDialog = true
-                    }) {
-                        Text(text = AnnotatedString(text = stringResource(id = R.string.WithAnotherItem)))
-                    }
-                    FilledTonalButton(onClick = {
+                    Button(modifier = Modifier.padding(horizontal = 4.dp), onClick = {
                         scope.launch {
-                            newScalaFactor = 1.0F
-                            viewModel.changeScalaFactor(newScalaFactor )
+                            viewModel.changeScalaFactor(newScalaFactor)
                         }
                         onBack() }) {
-                        Text(text = AnnotatedString(text = stringResource(id = R.string.ResetCalibration)))
-                    }
-
-                } else if (caliMode == ScalaCalibrationMode.Ruler) {
-                    if (showInfoDialog)
-                        CalibrationInfoDialog(text = stringResource(id = R.string.InstructionsCalibrateWithRuler), measuredMM = 0, withCreditcard = false, onDismissRequest = {
-                            showInfoDialog = false
-                        })
-                    else {
-                        Text(text = AnnotatedString(text = stringResource(id = R.string.DragTheScala)))
-                        Text(
-                            text = stringResource(id = R.string.Factor ) + ": " + String.format("%.2f", newScalaFactor),
-                            modifier = Modifier.padding(16.dp),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-
-                        Button(onClick = {
-                            scope.launch {
-                                viewModel.changeScalaFactor(newScalaFactor)
-                            }
-                            onBack()
-                        }) {
-                            Text(text = AnnotatedString(text = stringResource(id = R.string.Ok)))
-                        }
-
-                        OutlinedButton(onClick = onBack) {
-                            Text(text = AnnotatedString(text = stringResource(id = R.string.Cancel)))
-                        }
-                    }
-                } else if (caliMode == ScalaCalibrationMode.Card) {
-                    if (showInfoDialog)
-                        CalibrationInfoDialog(text = stringResource(id = R.string.InstructionsCalibrateWithCreditcard),
-                            itemName = stringResource(id = R.string.Creditcard), onDismissRequest = {
-                            showInfoDialog = false
-                        })
-                    else {
-                        Text(text = AnnotatedString(text = stringResource(id = R.string.DragTheScala)))
-                        Text(
-                            text = stringResource(id = R.string.Factor) + ": " + String.format("%.2f", newScalaFactor),
-                            modifier = Modifier.padding(16.dp),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-
-                        Button(onClick = {
-                            scope.launch {
-                                viewModel.changeScalaFactor(newScalaFactor)
-                            }
-                            onBack()
-                        }) {
-                            Text(text = AnnotatedString(text = stringResource(id = R.string.Ok)))
-                        }
-                        OutlinedButton(onClick = onBack) {
-                            Text(text = AnnotatedString(text = stringResource(id = R.string.Cancel)))
-                        }
-                    }
-                } else if (caliMode == ScalaCalibrationMode.UserDef) {
-                    if (showInfoDialog)
-                        CalibrationInfoDialog(text = stringResource(id = R.string.InstructionsCalibrateWithDifferentItem),
-                            itemName = stringResource(id = R.string.Item), onDismissRequest = {
-                            showInfoDialog = false
-                        })
-                    else {
-                        Text(text = AnnotatedString(text = stringResource(id = R.string.DragTheScala)))
-                        Text(
-                            text = stringResource(id = R.string.Factor) + ": " + String.format("%.2f", newScalaFactor),
-                            modifier = Modifier.padding(16.dp),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-
-                        Button(onClick = {
-                            scope.launch {
-                                viewModel.changeScalaFactor(newScalaFactor)
-                            }
-                            onBack()
-                        }) {
-                            Text(text = AnnotatedString(text = stringResource(id = R.string.Ok)))
-                        }
-                        OutlinedButton(onClick = onBack) {
-                            Text(text = AnnotatedString(text = stringResource(id = R.string.Cancel)))
-                        }
+                        Text(text = AnnotatedString(text = stringResource(id = R.string.Ok)))
                     }
                 }
+            }
+            else{
+                CalibrationOkAndCancel(onOk = {
+                    scope.launch {
+                        viewModel.changeScalaFactor(newScalaFactor)
+                    }
+                    onBack() },
+                    onBack = onBack)
+            }
 
+            if (showHowToDialog) {
+                when (caliMode) {
+                    ScalaCalibrationMode.Ruler -> {
+                        CalibrationModeRuler(onOk = { showHowToDialog = false })
+                    }
+                    ScalaCalibrationMode.Card -> {
+                        CalibrationModeCard(onOk = {
+                            calibratingDistance = 54
+                            showHowToDialog = false })
+                    }
+                    ScalaCalibrationMode.UserDef -> {
+                        CalibrationModeUserDef(onOk = {
+                            calibratingDistance = it
+                            showHowToDialog = false
+                        }, onBack)
+                    }
+                    else -> onBack()
+                }
             }
         }
     }
+}
 
-    if (showUserDefDialog){
+
+@Composable
+private fun CalibrationModeUserDef(
+    onOk: (distamce: Int) -> Unit,
+    onBack: () -> Unit
+) {
+    var showUserDefDialog by rememberSaveable { mutableStateOf(true) }
+    var calibratingDistance by rememberSaveable { mutableStateOf(0) }
+
+    if (showUserDefDialog) {
         UserDefDialog(
-            onDismissRequest = {
-                caliMode = ScalaCalibrationMode.UnDef
-                showUserDefDialog = false
-                               },
+            onDismissRequest = onBack,
             onConfirmation = {
                 calibratingDistance = it
-                showInfoDialog = true
-                caliMode = ScalaCalibrationMode.UserDef
                 showUserDefDialog = false
             }
         )
+    } else
+        CalibrationInfoDialog(text = stringResource(id = R.string.InstructionsCalibrateWithDifferentItem),
+            itemName = stringResource(id = R.string.Item),
+            onDismissRequest = { onOk(calibratingDistance) })
+}
+
+@Composable
+private fun CalibrationModeCard(onOk: () -> Unit) {
+    CalibrationInfoDialog(
+        text = stringResource(id = R.string.InstructionsCalibrateWithCreditcard),
+        itemName = stringResource(id = R.string.Creditcard), onDismissRequest = onOk
+    )
+}
+
+@Composable
+private fun CalibrationModeRuler(
+    onOk: () -> Unit
+) {
+
+    CalibrationInfoDialog(
+        text = stringResource(id = R.string.InstructionsCalibrateWithRuler),
+        measuredMM = 0,
+        withCreditcard = false,
+        onDismissRequest = onOk
+    )
+}
+
+@Composable
+private fun CalibrationOkAndCancel(
+    onOk: () -> Unit,
+    onBack: () -> Unit
+) {
+
+    Button(onClick = onOk) {
+        Text(text = AnnotatedString(text = stringResource(id = R.string.Ok)))
+    }
+
+    OutlinedButton(onClick = onBack) {
+        Text(text = AnnotatedString(text = stringResource(id = R.string.Cancel)))
     }
 }
 
@@ -289,7 +263,7 @@ fun UserDefDialog(
     onDismissRequest: () -> Unit,
     onConfirmation: (distance: Int) -> Unit,
 ) {
-    var text by remember { mutableStateOf("") }
+    var text by rememberSaveable { mutableStateOf("") }
     val focusInput = remember { FocusRequester() }
 
     Dialog(onDismissRequest = { onDismissRequest() }) {
@@ -297,7 +271,7 @@ fun UserDefDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(8.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
             Column(
@@ -309,7 +283,7 @@ fun UserDefDialog(
                 Text(
                     text = stringResource(id = R.string.Ask_For_Distance),
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(8.dp),
                 )
                 Row {
                     OutlinedTextField(
@@ -322,16 +296,18 @@ fun UserDefDialog(
                                 .replace(".", "")
                                 .replace(",", "")
                                 .replace("-", "")
-                                .replace(" ", "")},
+                                .replace(" ", "")
+                        },
                         label = { Text(stringResource(id = R.string.Distance)) },
-                        placeholder = { Text( "mm" ) },
+                        placeholder = { Text("mm") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         trailingIcon = {
 
-                            Icon(imageVector = Icons.Filled.Clear, contentDescription = stringResource(
-                                id = R.string.Delete
-                            ),
+                            Icon(imageVector = Icons.Filled.Clear,
+                                contentDescription = stringResource(
+                                    id = R.string.Delete
+                                ),
                                 modifier = Modifier.clickable {
                                     text = ""
                                     focusInput.requestFocus()
@@ -354,7 +330,7 @@ fun UserDefDialog(
                         onClick = {
                             if (text != "")
                                 onConfirmation(text.toInt())
-                                  },
+                        },
                         modifier = Modifier.padding(8.dp),
                     ) {
                         Text(stringResource(id = R.string.Ok))
@@ -380,6 +356,9 @@ fun CalibrationInfoDialog(
     withCreditcard: Boolean = true,
     onDismissRequest: () -> Unit,
 ) {
+
+    val configuration = LocalConfiguration.current
+    val isLandsacpe = Configuration.ORIENTATION_LANDSCAPE == configuration.orientation
 
     // Creates an [InfiniteTransition] instance for managing child animations.
     val infiniteTransition = rememberInfiniteTransition(label = "l1")
@@ -413,33 +392,39 @@ fun CalibrationInfoDialog(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Row (  modifier = Modifier.height(200.dp) ) {
+                Row(modifier = Modifier.height(200.dp)) {
                     Box(
                         modifier = Modifier
                     ) {
                         Surface(
                             modifier = Modifier
-                                .padding(16.dp)
-                                .height(200.dp)
-                            ,
+                                .padding( top =  if (isLandsacpe) 0.dp else 16.dp)
+                                .height(200.dp),
                             color = MaterialTheme.colorScheme.background,
                         ) {
-                            ScalaBar(scalaPosition = ScalaPosition.Left, measuredMM = measuredMM, scalaFactor = scale/100)
+                            ScalaBar(
+                                scalaPosition = ScalaPosition.Left,
+                                measuredMM = measuredMM,
+                                scalaFactor = scale / 100
+                            )
                         }
-                        if (withCreditcard){
+                        if (withCreditcard) {
                             Box(
-                                modifier = Modifier.padding(start = 56.dp)
+                                modifier = Modifier.padding(start = if (isLandsacpe) 0.dp else 56.dp, top = if (isLandsacpe) 16.dp else 0.dp)
                             ) {
                                 Surface(
                                     modifier = Modifier
-                                        .padding(16.dp)
-                                        .width(192.dp)
-                                        .height(125.dp)
-                                    ,
+                                        .padding(if (isLandsacpe) 0.dp else 16.dp)
+                                        .width( if (isLandsacpe ) 125.dp else 192.dp)
+                                        .height( if (isLandsacpe ) 180.dp else 125.dp),
                                     shape = RoundedCornerShape(20.dp),
                                     color = MaterialTheme.colorScheme.primaryContainer,
                                 ) {
-                                    Text(modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onPrimaryContainer, text = itemName)
+                                    Text(
+                                        modifier = Modifier.padding(16.dp),
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        text = itemName
+                                    )
                                 }
                             }
                         }
@@ -453,7 +438,7 @@ fun CalibrationInfoDialog(
                 )
                 Button(
                     modifier = Modifier
-                        .padding(16.dp)
+                        .padding(bottom = 8.dp)
                         .fillMaxWidth(),
                     onClick = { onDismissRequest() },
                 ) {

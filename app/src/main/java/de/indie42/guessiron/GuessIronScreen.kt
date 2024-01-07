@@ -1,6 +1,8 @@
 
 package de.indie42.guessiron
 
+import android.app.Activity
+import android.content.res.Configuration
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -28,14 +30,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -48,6 +58,7 @@ fun GuessIronScreen(
     onClickShowMeasured: () -> Unit,
     onClickEditScala: () -> Unit,
     onShowDisclaimer: () -> Unit,
+    /*onClickCameraMeasure: () -> Unit,*/
     viewModel: GuessIronViewModel = viewModel(),
 ) {
 
@@ -58,7 +69,7 @@ fun GuessIronScreen(
 
     val scope = rememberCoroutineScope()
 
-    var showSaveDialog by remember { mutableStateOf(false) }
+    var showSaveDialog by rememberSaveable { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -66,24 +77,41 @@ fun GuessIronScreen(
         onShowDisclaimer()
     }
 
+    val configuration = LocalConfiguration.current
+    val isLandsacpe = Configuration.ORIENTATION_LANDSCAPE == configuration.orientation
+
+    DynamicSystemBar(isLandsacpe)
+
+    var sizeInDp by remember { mutableStateOf(IntSize.Zero) }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = { }
     ) {
         // A surface container using the 'background' color from the theme
         Surface(
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize()
+                .onSizeChanged {  sizeInDp = it }
                 .pointerInput(Unit) {
                     var switchTopForCenter = 0F
                     detectDragGestures(onDragStart = { offset ->
-                        switchTopForCenter = offset.y
+                        switchTopForCenter = if (isLandsacpe)
+                            offset.x
+                        else
+                            offset.y
                     }) { _, dragAmount ->
-                        viewModel.increaseMeasuredPixel(dragAmount.y, switchTopForCenter)
+                        if (isLandsacpe)
+                            viewModel.increaseMeasuredPixel(dragAmount.x, switchTopForCenter, sizeInDp)
+                        else
+                            viewModel.increaseMeasuredPixel(dragAmount.y, switchTopForCenter, sizeInDp)
                     }
                 }
                 .pointerInput(Unit) {
-                    detectTapGestures { offset -> viewModel.updateMeasuredPixel(offset.y) }
+                    if (isLandsacpe)
+                        detectTapGestures { offset -> viewModel.updateMeasuredPixel(offset.x, sizeInDp) }
+                    else
+                        detectTapGestures { offset -> viewModel.updateMeasuredPixel(offset.y, sizeInDp) }
+
                 },
             color = MaterialTheme.colorScheme.background
         ) {
@@ -155,6 +183,28 @@ fun GuessIronScreen(
                 snackbarHostState.showSnackbar( message = "", duration = SnackbarDuration.Short )
             }
             showSaveDialog = false
+        }
+    }
+}
+
+@Composable
+fun DynamicSystemBar(isLandsacpe: Boolean) {
+    val activity = LocalContext.current as Activity
+
+    if (isLandsacpe) {
+        WindowCompat.setDecorFitsSystemWindows(activity.window, false)
+        WindowInsetsControllerCompat(activity.window, activity.window.decorView).let { controller ->
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.hide(WindowInsetsCompat.Type.navigationBars())
+        }
+    } else {
+        WindowCompat.setDecorFitsSystemWindows(activity.window, true)
+        WindowInsetsControllerCompat(activity.window, activity.window.decorView).let { controller ->
+            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
+            controller.show(WindowInsetsCompat.Type.systemBars())
+            controller.show(WindowInsetsCompat.Type.navigationBars())
         }
     }
 }

@@ -9,7 +9,8 @@ import kotlin.math.roundToInt
 class ScalaCalculator (
     val scalaDirection: ScalaDirection,
     val scalaPosition: ScalaPosition,
-    scalaFactor: Float ) {
+    scalaFactor: Float,
+    val isLandsacpe: Boolean) {
 
     private val displayMetrics = Resources.getSystem().displayMetrics
 
@@ -17,8 +18,21 @@ class ScalaCalculator (
     private val dpmmWithScalaFactor = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_MM, scalaFactor, displayMetrics)
 
     fun getHeightInMM(drawSize: Size):Int{
+        return (getScaleLengthInPixel(drawSize)/dpmmWithScalaFactor).roundToInt()
+    }
 
-        return (drawSize.height/dpmmWithScalaFactor).roundToInt()
+    fun getScaleLengthInPixel(drawSize: Size): Float{
+        if (isLandsacpe)
+            return drawSize.width
+
+        return drawSize.height
+    }
+
+    private fun getScalePositionRightOrBottomInPixel(drawSize: Size): Float{
+        if (isLandsacpe)
+            return drawSize.height
+
+        return drawSize.width
     }
 
     fun getMMinPixel(mm: Int):Float{
@@ -29,21 +43,24 @@ class ScalaCalculator (
     private fun directionOffset(drawSize: Size): Offset{
 
        if (scalaDirection == ScalaDirection.Center){
-            val heightInMM = drawSize.height / dpmmWithScalaFactor
+            val heightInMM = getScaleLengthInPixel(drawSize) / dpmmWithScalaFactor
 
             val displayInMM = getHeightInMM(drawSize)
 
            var oddOffset = Offset( x = 0F, y = 0F)
+
            if (displayInMM % 2 != 0)
                oddOffset = Offset (x = 0F, y = 0.5F * dpmmWithScalaFactor)
 
             val displayOffset = heightInMM - displayInMM
 
-            return Offset(0F, (displayOffset / 2F) * dpmmWithScalaFactor ) + oddOffset
+            val directionOffset = Offset(0F, (displayOffset / 2F) * dpmmWithScalaFactor ) + oddOffset
 
-           // 7 ist die Liniendicke bei 0
-           //return Offset ( x = 0F, y = (7F/2F)*-1F )
-           //return Offset ( x = 0F, y = 0F )
+           if  (isLandsacpe)
+               return Offset( x= directionOffset.y, y = directionOffset.x )
+
+           return directionOffset
+
         }
 
         return Offset(0F, 0F)
@@ -75,7 +92,7 @@ class ScalaCalculator (
     fun getScalaStartX(drawSize: Size): Float{
 
         if (scalaPosition == ScalaPosition.Right)
-            return drawSize.width
+            return getScalePositionRightOrBottomInPixel(drawSize)
 
         return 0f
     }
@@ -83,22 +100,15 @@ class ScalaCalculator (
     private fun getScalaY(lineCounter: Int, drawSize: Size): Float{
 
         if (scalaDirection == ScalaDirection.Bottom)
-            return drawSize.height - dpmmWithScalaFactor * lineCounter
+            return getScaleLengthInPixel(drawSize) - dpmmWithScalaFactor * lineCounter
 
         return dpmmWithScalaFactor * lineCounter
     }
 
     fun getScalaLineOffsetStart(lineCounter: Int, drawSize: Size): Offset {
 
-//        var additonalOffset = Offset(0F, 0f)
-//        if (scalaDirection == ScalaDirection.Center){
-//            val lineAmount = getHeightInMM(drawSize) / 2;
-//            if (lineCounter < lineAmount)
-//                additonalOffset += Offset(0F, drawSize.height / 2)
-//            else
-//                additonalOffset -= Offset(0F, drawSize.height / 2)
-//        }
-
+        if (isLandsacpe)
+            return Offset(x = getScalaY(lineCounter, drawSize) , y = getScalaStartX(drawSize) ) + directionOffset(drawSize)
 
         return Offset(x = getScalaStartX(drawSize), y = getScalaY(lineCounter, drawSize)) + directionOffset(drawSize)
     }
@@ -107,12 +117,19 @@ class ScalaCalculator (
         val lineLength = getLineLength(lineCounter, drawSize)
 
         if (scalaPosition == ScalaPosition.Right) {
-            return Offset( x = drawSize.width - dpmm * lineLength,  y = getScalaY(lineCounter, drawSize)) + directionOffset(drawSize)
+            if (isLandsacpe)
+                return Offset( x = getScalaY(lineCounter, drawSize),  y = getScalePositionRightOrBottomInPixel(drawSize) - dpmm * lineLength ) + directionOffset(drawSize)
+
+            return Offset( x = getScalePositionRightOrBottomInPixel(drawSize) - dpmm * lineLength,  y = getScalaY(lineCounter, drawSize)) + directionOffset(drawSize)
         }
+
+        if (isLandsacpe)
+            return Offset( x = getScalaY(lineCounter, drawSize), y = dpmm * lineLength) + directionOffset(drawSize)
+
         return Offset( x = dpmm * lineLength, y = getScalaY(lineCounter, drawSize)) + directionOffset(drawSize)
     }
 
-    private fun getLineLength(lineCounter: Int, drawSize: Size): Int
+    fun getLineLength(lineCounter: Int, drawSize: Size): Int
     {
         val lineCounterLPosition = getLinePosition(lineCounter, drawSize)
 

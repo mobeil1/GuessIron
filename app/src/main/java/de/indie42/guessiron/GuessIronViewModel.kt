@@ -1,7 +1,9 @@
 package de.indie42.guessiron
 
+import android.content.res.Configuration
 import android.content.res.Resources
 import android.util.TypedValue
+import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -79,7 +81,6 @@ class GuessIronViewModel(
     }
 
     private val displayMetrics = Resources.getSystem().displayMetrics
-    private val displayCenter = displayMetrics.heightPixels / 2
 
     suspend fun switchScala() {
 
@@ -133,7 +134,15 @@ class GuessIronViewModel(
         guessIronDataRepository.removeMeasuredValue(measuredValue)
     }
 
-    fun increaseMeasuredPixel(measuredPixelOffset: Float, startY: Float) {
+    fun increaseMeasuredPixel(measuredPixelOffset: Float, startY: Float, surfaceSize: IntSize) {
+
+        val isLandscape = Resources.getSystem().configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+        val displayCenter =
+            if (isLandscape)
+                surfaceSize.width / 2
+            else
+                surfaceSize.height / 2
 
         _uiState.update { currentState ->
 
@@ -149,8 +158,12 @@ class GuessIronViewModel(
             if (y < 0)
                 y = 0f
 
-            if (y > displayMetrics.heightPixels)
-                y = displayMetrics.heightPixels.toFloat()
+            var maxPixel = surfaceSize.height
+            if (isLandscape)
+                maxPixel = surfaceSize.width
+
+            if (y > maxPixel)
+                y = maxPixel.toFloat()
 
             currentState.copy(
                 measuredPixel = y,
@@ -160,13 +173,24 @@ class GuessIronViewModel(
         }
     }
 
-    fun updateMeasuredPixel(measuredPixel: Float) {
+    fun updateMeasuredPixel(measuredPixel: Float, surfaceSize: IntSize) {
+
+        val isLandscape = Resources.getSystem().configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+
+        val displayCenter =
+            if (isLandscape)
+                surfaceSize.width / 2
+            else
+                surfaceSize.height / 2
+
+        val displayPixel = if (isLandscape) surfaceSize.width else surfaceSize.height
 
         _uiState.update { currentState ->
 
             var measuredPixelOnScala = when (currentState.scalaDirection){
-                ScalaDirection.Top -> measuredPixel
-                ScalaDirection.Bottom -> displayMetrics.heightPixels - measuredPixel
+                ScalaDirection.Top ->  measuredPixel
+                ScalaDirection.Bottom -> displayPixel - measuredPixel
                 ScalaDirection.Center -> (displayCenter - measuredPixel) * 2
             }
 
