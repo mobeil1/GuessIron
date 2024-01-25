@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <string name="app_name">GuessIron</string>
+      
+  <string name="hello">Hola</string>
+      
+  <string name="measured">Medido</string>
+      
+  <string name="settings">Ajustes</string>
+      
+  <string name="calibration">Calibración</string>
+      
+  <string name="continue_without_calibration">Continuar sin calibración</string>
+      
+  <string name="disclaimer_info">GuessIron puede ayudarte, si no tienes regla</string>
+      
+  <string name="calibration_info">Puede ser que las medidas de tu móvil aún sean un poco imprecisas. ¡Primero debes calibrar GuessIron!</string>
+      
+  <string name="Save">Ahorrar</string>
+      
+  <string name="Cancel">Cancelar</string>
+      
+  <string name="Back">Atrás</string>
+      
+  <string name="Ok">DE ACUERDO</string>
+      
+  <string name="Name">Nombre</string>
+      
+  <string name="Distance">Distancia</string>
+      
+  <string name="Name_example">Tornillo</string>
+      
+  <string name="Save_Measured_Text">Guarde el valor medido</string>
+      
+  <string name="Show">Espectáculo</string>
+      
+  <string name="Measured_Value_Saved">Valor medido guardado</string>
+      
+  <string name="Rename">Rebautizar</string>
+      
+  <string name="Delete">Borrar</string>
+      
+  <string name="Edit">Editar</string>
+      
+  <string name="SortAlphabetic">Ordenar alfabéticamente</string>
+      
+  <string name="SortTimestamp">Ordenar por tiempo</string>
+      
+  <string name="Empty_Placeholder">Vacío</string>
+      
+  <string name="Ask_For_Distance">Ingrese el tamaño del artículo que desea usar para la calibración</string>
+      
+  <string name="SwitchScala">Cambiar escala</string>
+      
+  <string name="SaveMeasuredValue">Guardar valor medido</string>
+      
+  <string name="StartCalibration">Iniciar calibración</string>
+      
+  <string name="ShowMeasuredValues">Mostrar valores medidos</string>
+      
+  <string name="AskHowToCalibrate">¿Cómo le gustaría calibrar?</string>
+      
+  <string name="WithARuler">con una regla</string>
+      
+  <string name="WithACreditcard">Con una tarjeta de crédito</string>
+      
+  <string name="WithAnotherItem">Con otro item</string>
+      
+  <string name="ResetCalibration">Restablecer calibración</string>
+      
+  <string name="DragTheScala">Arrastra la escala</string>
+      
+  <string name="InstructionsCalibrateWithRuler">Mueva la escala hasta que el tamaño de la escala coincida con la escala de su regla</string>
+      
+  <string name="InstructionsCalibrateWithCreditcard">Mueva la báscula hasta que el tamaño del área marcada coincida con el lado corto de su tarjeta bancaria o documento de identidad.</string>
+      
+  <string name="InstructionsCalibrateWithDifferentItem">Mueva la escala hasta que el tamaño del área marcada coincida con el tamaño de su artículo</string>
+      
+  <string name="Creditcard">Tarjeta de crédito</string>
+      
+  <string name="Item">Artículo</string>
+      
+  <string name="Factor">Factor</string>
+      
+  <string name="NoMeasuredValues">no hay mediciones guardadas</string>
+      
+  <string name="ScreenMargin">Margen de pantalla</string>
+      
+  <string name="Margin">Margen</string>
+      
+  <string name="MarginConfigure">Configurar márgenes</string>
+      
+  <string name="ScreenMarginTop">Margen superior de la pantalla</string>
+      
+  <string name="ScreenMarginBottom">Margen inferior de la pantalla</string>
+      
+  <string name="ExplainMeasureToEdge">Configure el margen desde el borde de la pantalla hasta la escala para medir objetos intrusos, por ejemplo, un clavo en la pared.</string>
+      
+  <string name="ExplainConfigMargins">Configure los márgenes de la pantalla para medir objetos intrusos</string>
+      
+  <string name="ExplainMeasureToEdgeAndroidVersionNotSupported">Su versión de Android solo admite la medición de objetos intrusos en modo vertical</string>
+      
+  <string name="MeasuredValueToLong">¡El valor medido es demasiado grande para la escala actual!</string>
+  
+</resources>

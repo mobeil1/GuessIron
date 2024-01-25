@@ -2,6 +2,7 @@
     <string name="app_name">GuessIron</string>
     <string name="hello">Hello</string>
     <string name="measured">Measured</string>
+    <string name="settings">Settings</string>
     <string name="calibration">Calibration</string>
     <string name="continue_without_calibration">Continue without calibration</string>
     <string name="disclaimer_info">GuessIron can help you, if you don\'t have a ruler</string>
@@ -40,5 +41,15 @@
     <string name="Item">Item</string>
     <string name="Factor">Factor</string>
     <string name="NoMeasuredValues">no measurements saved</string>
+
+    <string name="ScreenMargin">Screen margin</string>
+    <string name="Margin">Margin</string>
+    <string name="MarginConfigure">Configure margins</string>
+    <string name="ScreenMarginTop">Screen margin top</string>
+    <string name="ScreenMarginBottom">Screen margin bottom</string>
+    <string name="ExplainMeasureToEdge">Configure the margin from the edge of the screen to the scale to measure intruding objects, for exampole a nail in the wall</string>
+    <string name="ExplainConfigMargins">Configure thr screen margins to measure intruding objects</string>
+    <string name="ExplainMeasureToEdgeAndroidVersionNotSupported">Your android version only support measuring intruding objects in portrait-modus</string>
+    <string name="MeasuredValueToLong">The measured value is too large for the current scale!</string>
 
 </resources>

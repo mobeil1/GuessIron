@@ -25,7 +25,7 @@ val Context.guessIronDataStore : DataStore<GuessIronData> by dataStore(fileName 
 private lateinit var viewModel: GuessIronViewModel
 
 enum class GuessIronRoutes ( val path: String) {
-    Main("main"), Measured("measured"), CalibrationOverview("calibration"), CalibrationMode("calibration/{mode}"), Disclaimer("disclaimer")/*, CameraMeasure("CameraMeasure")*/
+    Main("main"), Setting("Setting"), Measured("measured"), MeasureToEdgeSetting("MeasureToEdgeCalibration"), MeasureToEdgeCalibration("MeasureToEdgeCalibration/{direction}/{startOffset}"), CalibrationOverview("calibration"), CalibrationMode("calibration/{mode}"), Disclaimer("disclaimer")/*, CameraMeasure("CameraMeasure")*/
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
 
         viewModel = ViewModelProvider(
             this,
-            TasksViewModelFactory(
+            GuessIronViewModelFactory(
                 GuessIronDataRepository(guessIronDataStore)
             )
         )[GuessIronViewModel::class.java]
@@ -68,11 +68,14 @@ class MainActivity : ComponentActivity() {
                             onClickShowMeasured = {
                             navController.navigateSingleTopTo(GuessIronRoutes.Measured.path)
                             },
-                            onClickEditScala = {
-                                navController.navigateSingleTopTo(GuessIronRoutes.CalibrationOverview.path)
-                            },
                             onShowDisclaimer = {
                                 navController.navigateSingleTopTo(GuessIronRoutes.Disclaimer.path)
+                            },
+                            onShowSetting = {
+                                navController.navigateSingleTopTo(GuessIronRoutes.Setting.path)
+                            },
+                            onConfigDisplayBorder = {
+                                navController.navigateSingleTopTo(GuessIronRoutes.MeasureToEdgeSetting.path)
                             },
                             /*onClickCameraMeasure = {
                                 navController.navigateSingleTopTo(GuessIronRoutes.CameraMeasure.path)
@@ -85,11 +88,6 @@ class MainActivity : ComponentActivity() {
                             onBack = { navController.popBackStack() }
                         )
                     }
-//                    composable(route = GuessIronRoutes.CameraMeasure.path) {
-//                        CameraMeasureScreen(
-//                            onBack = { navController.popBackStack() }
-//                        )
-//                    }
                     composable(route = GuessIronRoutes.CalibrationOverview.path) {
                         ScalaCalibrationOverviewScreen(
                             viewModel = viewModel,
@@ -97,9 +95,41 @@ class MainActivity : ComponentActivity() {
                             onBack = { navController.popBackStack() }
                         )
                     }
+                    composable(route = GuessIronRoutes.Setting.path) {
+                        SettingsScreen(
+                            onClickCalibration = {
+                                navController.navigateSingleTopTo(GuessIronRoutes.CalibrationOverview.path)
+                            },
+                            onClickSetDisplayBorder = {
+                                navController.navigateSingleTopTo(GuessIronRoutes.MeasureToEdgeSetting.path)
+                            },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                     composable(route = GuessIronRoutes.CalibrationMode.path, arguments = listOf(navArgument("mode") { type = NavType.IntType })) {backStackEntry ->
                         ScalaCalibrationScreen(
                             mode =  backStackEntry.arguments?.getInt("mode") ?: 0,
+                            viewModel = viewModel,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(route = GuessIronRoutes.MeasureToEdgeSetting.path) {
+
+                        DisplayBorderScreen(
+                            viewModel = viewModel,
+                            onEdit = { direction, startOffset -> navController.navigate(GuessIronRoutes.MeasureToEdgeSetting.path+"/${direction.value}/$startOffset")  },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(
+                        route = GuessIronRoutes.MeasureToEdgeCalibration.path,
+                        arguments = listOf(
+                            navArgument("direction") { type = NavType.IntType },
+                            navArgument("startOffset") { type = NavType.IntType }) ) {
+                        backStackEntry ->
+                        MeasureToEdgeCalibrationScreen(
+                            offsetScalaDirection = backStackEntry.arguments?.getInt("direction") ?: 0,
+                            startOffset = backStackEntry.arguments?.getInt("startOffset") ?: 0,
                             viewModel = viewModel,
                             onBack = { navController.popBackStack() }
                         )

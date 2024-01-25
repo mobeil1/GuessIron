@@ -4,6 +4,7 @@
     <string name="app_name">GuessIron</string>
     <string name="hello">Hallo</string>
     <string name="measured">Gemessen</string>
+    <string name="settings">Einstellungen</string>
     <string name="calibration">Kalibrieren</string>
     <string name="continue_without_calibration">Weiter, ohne Kalibrierung</string>
     <string name="disclaimer_info">Wenn Sie gerade kein Lineal zur Hand haben, hilft Ihnen GuessIron weiter.</string>
@@ -42,5 +43,15 @@
     <string name="Item">Gegenstand</string>
     <string name="Factor">Faktor</string>
     <string name="NoMeasuredValues">Noch keine Messungen gespeichert</string>
+
+    <string name="ScreenMargin">Bildschirmrand</string>
+    <string name="Margin">Abstand</string>
+    <string name="MarginConfigure">Abstände einstellen</string>
+    <string name="ScreenMarginTop">Abstand zum oberen Rand</string>
+    <string name="ScreenMarginBottom">Abstand zum unteren Rand</string>
+    <string name="ExplainMeasureToEdge">Konfiguriere den Abstand vom Bildschirmrand zur Skala um abstehenden Gegenstände zu messen (z.B. einen herausragenden Nagel)</string>
+    <string name="ExplainConfigMargins">Damit abstehende Gegenstände gemessen werden können, müssen zuerst die Bildschrimränder konfiguriert werden</string>
+    <string name="ExplainMeasureToEdgeAndroidVersionNotSupported">Deine Android-Version unterstützt die Messung abstehender Gegenstände nur im Hochformat (Portrait-Modus)</string>
+    <string name="MeasuredValueToLong">Der gemessene Wert ist zu groß für die aktuelle Skala!</string>
 
 </resources>

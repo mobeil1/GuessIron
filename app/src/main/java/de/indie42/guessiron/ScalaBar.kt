@@ -1,6 +1,8 @@
 package de.indie42.guessiron
 
 import android.content.res.Configuration
+import android.os.Build
+import android.view.Surface
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -11,6 +13,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -32,14 +35,28 @@ fun ScalaBar(
     scalaColor: Color = MaterialTheme.colorScheme.onBackground,
     measureOffset: Offset = Offset(0f, 0f),
     measuredMM: Int = 0,
+    onMeasuedMMToBig: () -> Unit = {},
+    scalaStartMM: Int = 0,
     scalaFactor: Float = 1F,
-
+    supportLandscapeMode: Boolean = true,
     ) {
 
     val configuration = LocalConfiguration.current
-    val isLandsacpe = Configuration.ORIENTATION_LANDSCAPE == configuration.orientation
+    val isLandsacpe = Configuration.ORIENTATION_LANDSCAPE == configuration.orientation && supportLandscapeMode
 
-    val scalaCalculator = ScalaCalculator(direction, scalaPosition, scalaFactor, isLandsacpe)
+    var rotationDirection = direction
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && supportLandscapeMode) {
+        val displayRotation = LocalContext.current.display?.rotation ?: 0
+        if (displayRotation == Surface.ROTATION_270 || displayRotation == Surface.ROTATION_180)
+            rotationDirection = when (direction) {
+                ScalaDirection.Top -> ScalaDirection.Bottom
+                ScalaDirection.Bottom -> ScalaDirection.Top
+                else -> direction
+            }
+    }
+
+    val scalaCalculator = ScalaCalculator(rotationDirection, scalaPosition, scalaFactor, scalaStartMM, isLandsacpe)
 
     var measuredOffset = measureOffset
     if (measuredMM > 0)
@@ -48,7 +65,8 @@ fun ScalaBar(
     ScalaLines(
         measureOffset = measuredOffset,
         scalaColor = scalaColor,
-        scalaCalculator = scalaCalculator
+        scalaCalculator = scalaCalculator,
+        onMeasuedMMToBig
     )
 
     ScalaNumber(
@@ -58,7 +76,7 @@ fun ScalaBar(
 }
 
 @Composable
-fun ScalaLines(measureOffset: Offset, scalaColor: Color, scalaCalculator: ScalaCalculator) {
+fun ScalaLines(measureOffset: Offset, scalaColor: Color, scalaCalculator: ScalaCalculator, onMeasuedMMToBig: () -> Unit) {
 
     val measureColor = MaterialTheme.colorScheme.primary
     val measureOnColor = MaterialTheme.colorScheme.onPrimary
@@ -72,6 +90,11 @@ fun ScalaLines(measureOffset: Offset, scalaColor: Color, scalaCalculator: ScalaC
         var startMeasured = measureOffset.y
 
         val scaleLengthInPixel = scalaCalculator.getScaleLengthInPixel(size)
+
+        val threshold = scalaCalculator.getMMinPixel(1)
+
+        if (scaleLengthInPixel + threshold < measureOffset.y)
+            onMeasuedMMToBig()
 
         if (scalaCalculator.scalaDirection == ScalaDirection.Center) {
             val centerMeasured = measureOffset.y / 2F

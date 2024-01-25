@@ -10,6 +10,7 @@ class ScalaCalculator (
     val scalaDirection: ScalaDirection,
     val scalaPosition: ScalaPosition,
     scalaFactor: Float,
+    private val startMM: Int,
     val isLandsacpe: Boolean) {
 
     private val displayMetrics = Resources.getSystem().displayMetrics
@@ -86,7 +87,7 @@ class ScalaCalculator (
 
         }
 
-        return lineCounter
+        return lineCounter + startMM
     }
 
     fun getScalaStartX(drawSize: Size): Float{

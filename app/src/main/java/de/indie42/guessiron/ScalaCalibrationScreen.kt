@@ -1,6 +1,7 @@
 package de.indie42.guessiron
 
 import android.content.res.Configuration
+import android.os.Build
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -47,6 +48,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
@@ -68,12 +70,16 @@ fun ScalaCalibrationScreen(mode: Int = 0, viewModel: GuessIronViewModel, onBack:
     val configuration = LocalConfiguration.current
     val isLandsacpe = Configuration.ORIENTATION_LANDSCAPE == configuration.orientation
 
-    val guessIronDataState by viewModel.dataState.collectAsState()
+    var displayRotation = android.view.Surface.ROTATION_0
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        displayRotation = LocalContext.current.display?.rotation ?: android.view.Surface.ROTATION_0
+    }
+
     val guessIronUiState by viewModel.uiState.collectAsState()
 
     var calibratingDistance by rememberSaveable { mutableIntStateOf(0) }
     var showHowToDialog by rememberSaveable { mutableStateOf(true) }
-    var newScalaFactor by rememberSaveable { mutableFloatStateOf(guessIronDataState.scalaFactor) }
+    var newScalaFactor by rememberSaveable { mutableFloatStateOf(guessIronUiState.scalaFactor) }
 
     val scope = rememberCoroutineScope()
 
@@ -97,7 +103,17 @@ fun ScalaCalibrationScreen(mode: Int = 0, viewModel: GuessIronViewModel, onBack:
                         dragAmount.x
                     else
                         dragAmount.y
-                    val y = when (guessIronUiState.scalaDirection) {
+
+                    var scalaOrientation = guessIronUiState.scalaDirection
+                    if (displayRotation == android.view.Surface.ROTATION_180 || displayRotation == android.view.Surface.ROTATION_270) {
+                        scalaOrientation = when (scalaOrientation) {
+                            ScalaDirection.Top -> ScalaDirection.Bottom
+                            ScalaDirection.Bottom -> ScalaDirection.Top
+                            else -> scalaOrientation
+                        }
+                    }
+
+                    val y = when (scalaOrientation) {
                         ScalaDirection.Top -> dragLength
                         ScalaDirection.Bottom -> dragLength * -1
                         ScalaDirection.Center -> {
@@ -206,7 +222,7 @@ private fun CalibrationModeUserDef(
     onBack: () -> Unit
 ) {
     var showUserDefDialog by rememberSaveable { mutableStateOf(true) }
-    var calibratingDistance by rememberSaveable { mutableStateOf(0) }
+    var calibratingDistance by rememberSaveable { mutableIntStateOf(0) }
 
     if (showUserDefDialog) {
         UserDefDialog(
@@ -452,5 +468,7 @@ fun CalibrationInfoDialog(
 @Preview(showBackground = true)
 @Composable
 fun UserDefDialogPreview() {
-    UserDefDialog(onDismissRequest = {}, onConfirmation = {})
+    //UserDefDialog(onDismissRequest = {}, onConfirmation = {})
+
+    CalibrationInfoDialog(onDismissRequest = {})
 }

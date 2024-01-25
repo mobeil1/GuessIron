@@ -2,6 +2,7 @@ package de.indie42.guessiron.data
 
 import android.util.Log
 import androidx.datastore.core.DataStore
+import de.indie42.guessiron.DisplayBorder
 import de.indie42.guessiron.GuessIronData
 import de.indie42.guessiron.MeasuredValue
 import de.indie42.guessiron.ScalaDirection
@@ -29,6 +30,13 @@ class GuessIronDataRepository(private val guessIronDataDataStore: DataStore<Gues
             currentPreferences.toBuilder().setDisclaimerDisabled(true).build()
         }
     }
+
+    suspend fun changeDisplayBorder( displayBorder: DisplayBorder ) {
+        guessIronDataDataStore.updateData { currentPreferences ->
+            currentPreferences.toBuilder().setDisplayBorder(displayBorder).build()
+        }
+    }
+
     suspend fun changeScalaFactor(scalaFactor: Float) {
         guessIronDataDataStore.updateData { currentPreferences ->
             currentPreferences.toBuilder().setScalaFactor(scalaFactor).build()
@@ -38,6 +46,12 @@ class GuessIronDataRepository(private val guessIronDataDataStore: DataStore<Gues
     suspend fun changeScalaDirection(scalaDirection: ScalaDirection) {
         guessIronDataDataStore.updateData { currentPreferences ->
             currentPreferences.toBuilder().setScalaDirection(scalaDirection.value).build()
+        }
+    }
+
+    suspend fun changeScalaOffsetActive(scalaOffsetActive: Boolean) {
+        guessIronDataDataStore.updateData { currentPreferences ->
+            currentPreferences.toBuilder().setScalaOffsetActive(scalaOffsetActive).build()
         }
     }
 

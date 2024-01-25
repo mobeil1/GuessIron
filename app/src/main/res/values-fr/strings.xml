@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><resources>
+      
+  <string name="app_name">GuessIron</string>
+      
+  <string name="hello">Bonjour</string>
+      
+  <string name="measured">Mesuré</string>
+      
+  <string name="settings">Paramètres</string>
+      
+  <string name="calibration">Étalonnage</string>
+      
+  <string name="continue_without_calibration">Continuer sans calibrage</string>
+      
+  <string name="disclaimer_info">GuessIron peut vous aider si vous n\'avez pas de règle</string>
+      
+  <string name="calibration_info">Il se peut que les mesures de votre téléphone portable soient encore un peu imprécises. Vous devez d\'abord calibrer GuessIron !</string>
+      
+  <string name="Save">Sauvegarder</string>
+      
+  <string name="Cancel">Annuler</string>
+      
+  <string name="Back">Dos</string>
+      
+  <string name="Ok">D\'ACCORD</string>
+      
+  <string name="Name">Nom</string>
+      
+  <string name="Distance">Distance</string>
+      
+  <string name="Name_example">Vis</string>
+      
+  <string name="Save_Measured_Text">Enregistrer la valeur mesurée</string>
+      
+  <string name="Show">Montrer</string>
+      
+  <string name="Measured_Value_Saved">Valeur mesurée enregistrée</string>
+      
+  <string name="Rename">Renommer</string>
+      
+  <string name="Delete">Supprimer</string>
+      
+  <string name="Edit">Modifier</string>
+      
+  <string name="SortAlphabetic">Trier par ordre alphabétique</string>
+      
+  <string name="SortTimestamp">Trier par heure</string>
+      
+  <string name="Empty_Placeholder">Vide</string>
+      
+  <string name="Ask_For_Distance">Entrez la taille de l\'élément que vous souhaitez utiliser pour l\'étalonnage</string>
+      
+  <string name="SwitchScala">Changer d\'échelle</string>
+      
+  <string name="SaveMeasuredValue">Enregistrer la valeur mesurée</string>
+      
+  <string name="StartCalibration">Démarrer l\'étalonnage</string>
+      
+  <string name="ShowMeasuredValues">Afficher les valeurs mesurées</string>
+      
+  <string name="AskHowToCalibrate">Comment souhaitez-vous calibrer ?</string>
+      
+  <string name="WithARuler">Avec une règle</string>
+      
+  <string name="WithACreditcard">Avec une carte de crédit</string>
+      
+  <string name="WithAnotherItem">Avec un autre article</string>
+      
+  <string name="ResetCalibration">Réinitialiser l\'étalonnage</string>
+      
+  <string name="DragTheScala">Faites glisser l\'échelle</string>
+      
+  <string name="InstructionsCalibrateWithRuler">Déplacez l\'échelle jusqu\'à ce que la taille de l\'échelle corresponde à l\'échelle de votre règle</string>
+      
+  <string name="InstructionsCalibrateWithCreditcard">Déplacez la balance jusqu\'à ce que la taille de la zone marquée corresponde au petit côté de votre carte bancaire ou de votre carte d\'identité.</string>
+      
+  <string name="InstructionsCalibrateWithDifferentItem">Déplacez l\'échelle jusqu\'à ce que la taille de la zone marquée corresponde à la taille de votre article</string>
+      
+  <string name="Creditcard">Carte de crédit</string>
+      
+  <string name="Item">Article</string>
+      
+  <string name="Factor">Facteur</string>
+      
+  <string name="NoMeasuredValues">aucune mesure enregistrée</string>
+      
+  <string name="ScreenMargin">Marge d\'écran</string>
+      
+  <string name="Margin">Marge</string>
+      
+  <string name="MarginConfigure">Configurer les marges</string>
+      
+  <string name="ScreenMarginTop">Marge d\'écran supérieure</string>
+      
+  <string name="ScreenMarginBottom">Marge inférieure de l\'écran</string>
+      
+  <string name="ExplainMeasureToEdge">Configurez la marge du bord de l\'écran à l\'échelle pour mesurer les objets intrusifs, par exemple un clou dans le mur</string>
+      
+  <string name="ExplainConfigMargins">Configurer les marges de l\'écran pour mesurer les objets intrusifs</string>
+      
+  <string name="ExplainMeasureToEdgeAndroidVersionNotSupported">Votre version Android ne prend en charge que la mesure des objets intrus en mode portrait</string>
+      
+  <string name="MeasuredValueToLong">La valeur mesurée est trop grande pour l\'échelle actuelle !</string>
+  
+</resources>

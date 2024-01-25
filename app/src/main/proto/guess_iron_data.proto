@@ -25,6 +25,11 @@ message MeasuredValue {
   int32 measured = 3;
 }
 
+message DisplayBorder {
+  int32 top = 1;
+  int32 bottom = 2;
+}
+
 message GuessIronData {
 
   bool disclaimer_disabled = 1;
@@ -42,4 +47,9 @@ message GuessIronData {
   float scalaFactor = 4;
 
   int32 scalaDirection = 5;
+
+  DisplayBorder displayBorder = 6;
+
+  bool scalaOffsetActive = 7;
+
 }

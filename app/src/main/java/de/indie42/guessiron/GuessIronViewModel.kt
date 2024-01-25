@@ -3,6 +3,7 @@ package de.indie42.guessiron
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.util.TypedValue
+import android.view.Surface
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -18,16 +19,20 @@ import kotlinx.coroutines.flow.update
 import kotlin.math.roundToInt
 
 data class GuessIronUiState(
+    val disclaimerDisabled: Boolean = true,
     val scalaDirection: ScalaDirection,
+    val scalaFactor: Float = 1F,
+    val scalaOffset: Int = 0,
+    val scalaOffsetActive: Boolean = false,
     val measuredPixel: Float = 0F,
     val measuredDistance: Int = 0,
     val measuredUnit: String = "mm",
 )
+
 data class GuessIronDataState(
-    val scalaFactor: Float = 1F,
-    val disclaimerDisabled: Boolean = true,
     val orderByDate: GuessIronData.SortOrder = GuessIronData.SortOrder.BY_Timestamp,
-    val measuredValues: List<MeasuredValue> = arrayListOf()
+    val measuredValues: List<MeasuredValue> = arrayListOf(),
+    val displayBorder: DisplayBorder = DisplayBorder.getDefaultInstance()
 )
 
 class GuessIronViewModel(
@@ -36,33 +41,54 @@ class GuessIronViewModel(
 
     private var currentScalaFactor = 1F
 
-    private val _uiState = MutableStateFlow(GuessIronUiState(scalaDirection = ScalaDirection.Top) )
+    private val _uiState = MutableStateFlow(GuessIronUiState(scalaDirection = ScalaDirection.Top))
     val uiState: StateFlow<GuessIronUiState> = _uiState.asStateFlow()
 
     val dataState: StateFlow<GuessIronDataState> = guessIronDataRepository.guessIronDataFlow
         .map { item ->
 
-            copyScalaDirectionToUiState(item)
+            copyValuesToUiState(item)
 
             validateScalaFactor(item)
 
             GuessIronDataState(
-                scalaFactor = currentScalaFactor,
                 measuredValues = sortMeasuredValues(item),
                 orderByDate = item.sortOrder,
-                disclaimerDisabled = item.disclaimerDisabled)
+                displayBorder = item.displayBorder
+            )
 
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, GuessIronDataState())
 
-    private fun copyScalaDirectionToUiState(item: GuessIronData) {
+    private fun copyValuesToUiState(item: GuessIronData) {
         val scalaDirection = ScalaDirection.values().first { it.value == item.scalaDirection }
 
         _uiState.update { currentState ->
+
+            val scalaOffset = when (scalaDirection) {
+                ScalaDirection.Top -> item.displayBorder.top
+                ScalaDirection.Bottom -> item.displayBorder.bottom
+                else -> 0
+            }
+
+            val measuredDistanceWithOffset = currentState.measuredDistance - getCurrentScalaOffset(item.scalaOffsetActive, scalaOffset)
+
             currentState.copy(
+                disclaimerDisabled = item.disclaimerDisabled,
+                scalaFactor = currentScalaFactor,
                 scalaDirection = scalaDirection,
+                scalaOffset = scalaOffset,
+                scalaOffsetActive = item.scalaOffsetActive,
+                measuredPixel = calculatePixelFromMM(measuredDistanceWithOffset)
             )
         }
+    }
+
+    private fun getCurrentScalaOffset(scalaOffsetActive: Boolean, scalaOffset: Int): Int {
+        if (scalaOffsetActive)
+            return scalaOffset
+
+        return 0
     }
 
     private fun validateScalaFactor(item: GuessIronData) {
@@ -82,30 +108,24 @@ class GuessIronViewModel(
 
     private val displayMetrics = Resources.getSystem().displayMetrics
 
-    suspend fun switchScala() {
+    suspend fun toggleScalaOffset(toggleScalaOffset: Boolean) {
+        guessIronDataRepository.changeScalaOffsetActive(!toggleScalaOffset)
+    }
 
-        var newScalaDirection = ScalaDirection.Top
+    suspend fun switchScala(scalaDirection: ScalaDirection) {
 
-        _uiState.update { currentState ->
-
-            newScalaDirection = when ( currentState.scalaDirection){
-                ScalaDirection.Top -> ScalaDirection.Bottom
-                ScalaDirection.Bottom -> ScalaDirection.Center
-                ScalaDirection.Center -> ScalaDirection.Top
-            }
-
-            currentState.copy(
-                scalaDirection = newScalaDirection,
-                measuredPixel = calculatePixelFromMM(currentState.measuredDistance)
-            )
+        val newScalaDirection = when (scalaDirection) {
+            ScalaDirection.Top -> ScalaDirection.Bottom
+            ScalaDirection.Bottom -> ScalaDirection.Center
+            ScalaDirection.Center -> ScalaDirection.Top
         }
 
         guessIronDataRepository.changeScalaDirection(newScalaDirection)
     }
 
-    suspend fun changeScalaFactor(scalaFactor: Float){
+    suspend fun changeScalaFactor(scalaFactor: Float) {
 
-        if (scalaFactor in 0.5F..3F){
+        if (scalaFactor in 0.5F..3F) {
             currentScalaFactor = scalaFactor
             guessIronDataRepository.changeScalaFactor(scalaFactor)
 
@@ -114,29 +134,45 @@ class GuessIronViewModel(
 
     }
 
-    suspend fun disableDisclaimer(){
+    suspend fun changeDisplayBorder(displayBorderTop: Int, displayBorderBottom: Int) {
+
+        val newDisplayBorder =
+            DisplayBorder.newBuilder()
+                .setTop(displayBorderTop)
+                .setBottom(displayBorderBottom).build()
+
+        guessIronDataRepository.changeDisplayBorder(newDisplayBorder)
+    }
+
+    suspend fun disableDisclaimer() {
         guessIronDataRepository.disableDisclaimer()
     }
 
-    suspend fun changeSortBy(sort: GuessIronData.SortOrder){
+    suspend fun changeSortBy(sort: GuessIronData.SortOrder) {
         guessIronDataRepository.changeSortBy(sort)
     }
 
-    suspend fun addMeasuredValue(measuredValue: MeasuredValue){
+    suspend fun addMeasuredValue(measuredValue: MeasuredValue) {
         guessIronDataRepository.addMeasuredValue(measuredValue)
     }
 
-    suspend fun updateMeasuredValue(measuredValue: MeasuredValue, name: String){
+    suspend fun updateMeasuredValue(measuredValue: MeasuredValue, name: String) {
         guessIronDataRepository.updateMeasuredValue(measuredValue, name)
     }
 
-    suspend fun removeMeasuredValue(measuredValue: MeasuredValue){
+    suspend fun removeMeasuredValue(measuredValue: MeasuredValue) {
         guessIronDataRepository.removeMeasuredValue(measuredValue)
     }
 
-    fun increaseMeasuredPixel(measuredPixelOffset: Float, startY: Float, surfaceSize: IntSize) {
+    fun increaseMeasuredPixel(
+        measuredPixelOffset: Float,
+        startY: Float,
+        surfaceSize: IntSize,
+        displayRotation: Int
+    ) {
 
-        val isLandscape = Resources.getSystem().configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val isLandscape =
+            Resources.getSystem().configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
         val displayCenter =
             if (isLandscape)
@@ -146,10 +182,12 @@ class GuessIronViewModel(
 
         _uiState.update { currentState ->
 
-            var y = when(currentState.scalaDirection){
+            val scalaOrientation = scalaDirectionByRotation(currentState, displayRotation)
+
+            var y = when (scalaOrientation) {
                 ScalaDirection.Top -> currentState.measuredPixel + measuredPixelOffset
                 ScalaDirection.Bottom -> currentState.measuredPixel - measuredPixelOffset
-                ScalaDirection.Center -> if ( startY < displayCenter)
+                ScalaDirection.Center -> if (startY < displayCenter)
                     currentState.measuredPixel - measuredPixelOffset * 2
                 else
                     currentState.measuredPixel + measuredPixelOffset * 2
@@ -167,16 +205,34 @@ class GuessIronViewModel(
 
             currentState.copy(
                 measuredPixel = y,
-                measuredDistance = calculateMMFromPixel(y)
+                measuredDistance = calculateMMFromPixel(y, getCurrentScalaOffset(
+                    currentState.scalaOffsetActive,
+                    currentState.scalaOffset
+                ))
             )
 
         }
     }
 
-    fun updateMeasuredPixel(measuredPixel: Float, surfaceSize: IntSize) {
+    private fun scalaDirectionByRotation(
+        currentState: GuessIronUiState,
+        displayRotation: Int
+    ): ScalaDirection {
+        var scalaOrientation = currentState.scalaDirection
+        if (displayRotation == Surface.ROTATION_180 || displayRotation == Surface.ROTATION_270) {
+            scalaOrientation = when (scalaOrientation) {
+                ScalaDirection.Top -> ScalaDirection.Bottom
+                ScalaDirection.Bottom -> ScalaDirection.Top
+                else -> scalaOrientation
+            }
+        }
+        return scalaOrientation
+    }
 
-        val isLandscape = Resources.getSystem().configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    fun updateMeasuredPixel(measuredPixel: Float, surfaceSize: IntSize, displayRotation: Int) {
 
+        val isLandscape =
+            Resources.getSystem().configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
         val displayCenter =
             if (isLandscape)
@@ -188,8 +244,10 @@ class GuessIronViewModel(
 
         _uiState.update { currentState ->
 
-            var measuredPixelOnScala = when (currentState.scalaDirection){
-                ScalaDirection.Top ->  measuredPixel
+            val scalaOrientation = scalaDirectionByRotation(currentState, displayRotation)
+
+            var measuredPixelOnScala = when (scalaOrientation) {
+                ScalaDirection.Top -> measuredPixel
                 ScalaDirection.Bottom -> displayPixel - measuredPixel
                 ScalaDirection.Center -> (displayCenter - measuredPixel) * 2
             }
@@ -199,16 +257,22 @@ class GuessIronViewModel(
 
             currentState.copy(
                 measuredPixel = measuredPixelOnScala,
-                measuredDistance = calculateMMFromPixel(measuredPixelOnScala)
+                measuredDistance = calculateMMFromPixel(
+                    measuredPixelOnScala,
+                    currentState.scalaOffset
+                )
             )
         }
     }
 
-    fun setMeasuredValue(millimeter: Int){
+    fun setMeasuredValue(millimeter: Int) {
 
         _uiState.update { currentState ->
 
-            val measuredPixel = calculatePixelFromMM(millimeter)
+            val measuredPixel = calculatePixelFromMM(millimeter - getCurrentScalaOffset(
+                currentState.scalaOffsetActive,
+                currentState.scalaOffset
+            ) )
 
             currentState.copy(
                 measuredPixel = measuredPixel,
@@ -217,18 +281,26 @@ class GuessIronViewModel(
         }
     }
 
-    private fun calculatePixelFromMM(millimeter: Int): Float {
+    fun calculatePixelFromMM(millimeter: Int): Float {
 
-        val dpmm = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_MM, currentScalaFactor, displayMetrics)
+        val dpmm = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_MM,
+            currentScalaFactor,
+            displayMetrics
+        )
 
         return dpmm * millimeter.toFloat()
     }
 
-    private fun calculateMMFromPixel(measuredPixel: Float): Int {
+    fun calculateMMFromPixel(measuredPixel: Float, offsetMM: Int): Int {
 
-        val dpmm = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_MM, currentScalaFactor, displayMetrics)
+        val dpmm = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_MM,
+            currentScalaFactor,
+            displayMetrics
+        )
 
-        val measuredMM = (measuredPixel / dpmm).roundToInt()
+        val measuredMM = (measuredPixel / dpmm).roundToInt() + offsetMM
 
         if (measuredMM < 0)
             return measuredMM * -1
@@ -237,14 +309,14 @@ class GuessIronViewModel(
     }
 }
 
-class TasksViewModelFactory(
+class GuessIronViewModelFactory(
     private val userPreferencesRepository: GuessIronDataRepository
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(GuessIronViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return GuessIronViewModel( userPreferencesRepository) as T
+            return GuessIronViewModel(userPreferencesRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
