@@ -36,17 +36,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        //enableEdgeToEdge()
-
-        //for immersive mode
-        /*WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
-            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            controller.hide(WindowInsetsCompat.Type.systemBars())
-            controller.hide(WindowInsetsCompat.Type.navigationBars())
-        }*/
-
         viewModel = ViewModelProvider(
             this,
             GuessIronViewModelFactory(
@@ -77,9 +66,6 @@ class MainActivity : ComponentActivity() {
                             onConfigDisplayBorder = {
                                 navController.navigateSingleTopTo(GuessIronRoutes.MeasureToEdgeSetting.path)
                             },
-                            /*onClickCameraMeasure = {
-                                navController.navigateSingleTopTo(GuessIronRoutes.CameraMeasure.path)
-                            },*/
                             viewModel = viewModel)
                     }
                     composable(route = GuessIronRoutes.Measured.path) {
