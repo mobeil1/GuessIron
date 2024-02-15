@@ -19,10 +19,17 @@ syntax = "proto3";
 option java_package = "de.indie42.guessiron";
 option java_multiple_files = true;
 
+
 message MeasuredValue {
   string name = 1;
   string timestamp = 2;
   int32 measured = 3;
+  enum MeasureType {
+    Single = 0;
+    Endless = 1;
+  }
+  MeasureType measureType = 4;
+
 }
 
 message DisplayBorder {
@@ -51,5 +58,9 @@ message GuessIronData {
   DisplayBorder displayBorder = 6;
 
   bool scalaOffsetActive = 7;
+
+  bool endlessModeActive = 8;
+
+  bool howToEndlessDisabled = 9;
 
 }

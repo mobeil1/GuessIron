@@ -5,11 +5,11 @@ import android.view.Surface
 import android.view.View
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Dock
 import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.VerticalAlignCenter
@@ -24,34 +24,17 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-
-@Composable
-fun GuessIronMenu(
-    onClickSaveMeasuredValue: () -> Unit,
-    onClickNaviIcon: () -> Unit,
-    onShowSetting: () -> Unit
-) {
-
-    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
-
-        IconButton(onClick = onClickSaveMeasuredValue) {
-            Icon(Icons.Filled.Save, contentDescription = stringResource(id = R.string.SaveMeasuredValue))
-        }
-        IconButton(onClick = onClickNaviIcon) {
-            Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(id = R.string.ShowMeasuredValues) )
-        }
-        IconButton(onClick = onShowSetting) {
-            Icon(Icons.Filled.MoreHoriz, contentDescription = stringResource(id = R.string.ShowMeasuredValues) )
-        }
-    }
-}
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun MeasureMenu(
     scalaDirection: ScalaDirection,
     onClickSwitchScala: () -> Unit,
     onClickAddScalaOffset: () -> Unit,
-    offsetActive: Boolean = false
+    onMeasureEndless: () -> Unit,
+    onMore: () -> Unit,
+    offsetActive: Boolean = false,
+    measureEndlessActive: Boolean = false
 ) {
 
     var iconRotation = 0
@@ -89,13 +72,19 @@ fun MeasureMenu(
     )
     val defaultColor = IconButtonDefaults.iconButtonColors()
 
-    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+    Row( modifier = Modifier.padding(8.dp),horizontalArrangement = Arrangement.SpaceEvenly) {
 
         IconButton( modifier = Modifier.rotate(iconRotation.toFloat()), onClick = onClickSwitchScala) {
             Icon(directionIcon, contentDescription = stringResource(id = R.string.SwitchScala))
         }
         IconButton( modifier = Modifier.rotate(iconRotation.toFloat()+upsideDownRotation), colors = if (offsetActive) activeColor else defaultColor, onClick = onClickAddScalaOffset) {
             Icon(imageVector = measureToEdgeIcon, modifier = Modifier.rotate(180F), contentDescription = stringResource(id = R.string.SwitchScala))
+        }
+        IconButton( colors = if (measureEndlessActive) activeColor else defaultColor, onClick = onMeasureEndless) {
+            Icon(imageVector = Icons.Filled.Repeat, modifier = Modifier.rotate(180F), contentDescription = stringResource(id = R.string.SwitchScala))
+        }
+        IconButton( onClick = onMore) {
+            Icon(imageVector = Icons.Filled.MoreHoriz, contentDescription = stringResource(id = R.string.settings))
         }
     }
 }

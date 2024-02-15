@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -80,43 +81,47 @@ fun MeasureToEdgeCalibrationScreen(
     val configuration = LocalConfiguration.current
     val isLandsacpe = Configuration.ORIENTATION_LANDSCAPE == configuration.orientation
 
+    val winInsetsSystembars = dynamicSystemBar(isLandsacpe)
+
     var displayRotation by remember { mutableIntStateOf(android.view.Surface.ROTATION_0)}
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         displayRotation = LocalContext.current.display?.rotation ?: android.view.Surface.ROTATION_0
     }
 
-    DynamicSystemBar(true)
-
     Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectDragGestures(onDragStart = { _ ->
-                }) { _, dragAmount ->
-                    var dragOffset = if (isLandsacpe)
-                        dragAmount.x
-                    else
-                        dragAmount.y
-
-                    if (displayRotation == android.view.Surface.ROTATION_180 || displayRotation == android.view.Surface.ROTATION_270) {
-                        dragOffset *= -1
-                    }
-
-                    if (scalaDirection == ScalaDirection.Bottom)
-                        dragOffset *= -1
-
-                    edgePixelOffset += dragOffset
-                    if (edgePixelOffset > 0)
-                        edgePixelOffset = 0F
-
-                    edgeMMOffset = viewModel.calculateMMFromPixel(edgePixelOffset, 0)
-
-
-                }
-            },
-        color = MaterialTheme.colorScheme.background
+        modifier = Modifier.fillMaxSize()
     ) {
+        Surface(
+            modifier = Modifier
+                .windowInsetsPadding(winInsetsSystembars)
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectDragGestures(onDragStart = { _ ->
+                    }) { _, dragAmount ->
+                        var dragOffset = if (isLandsacpe)
+                            dragAmount.x
+                        else
+                            dragAmount.y
+
+                        if (displayRotation == android.view.Surface.ROTATION_180 || displayRotation == android.view.Surface.ROTATION_270) {
+                            dragOffset *= -1
+                        }
+
+                        if (scalaDirection == ScalaDirection.Bottom)
+                            dragOffset *= -1
+
+                        edgePixelOffset += dragOffset
+                        if (edgePixelOffset > 0)
+                            edgePixelOffset = 0F
+
+                        edgeMMOffset = viewModel.calculateMMFromPixel(edgePixelOffset, 0)
+
+
+                    }
+                },
+            color = MaterialTheme.colorScheme.background
+        ) {
         ScalaBar(
             scalaDirection,
             ScalaPosition.Left,
@@ -129,7 +134,7 @@ fun MeasureToEdgeCalibrationScreen(
             scalaFactor = guessIronUiState.scalaFactor,
             scalaStartMM = edgeMMOffset
         )
-
+        }
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center

@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">GuessIron</string>
     <string name="hello">Hello</string>
-    <string name="measured">Measured</string>
+    <string name="measured">Measurements</string>
     <string name="settings">Settings</string>
     <string name="calibration">Calibration</string>
     <string name="continue_without_calibration">Continue without calibration</string>
@@ -27,7 +27,7 @@
     <string name="SwitchScala">Switch scale</string>
     <string name="SaveMeasuredValue">Save measured value</string>
     <string name="StartCalibration">Start calibration</string>
-    <string name="ShowMeasuredValues">Show measured values</string>
+    <string name="ShowMeasuredValues">Show measurements</string>
     <string name="AskHowToCalibrate">How would you like to calibrate?</string>
     <string name="WithARuler">With a ruler</string>
     <string name="WithACreditcard">With a credit card</string>
@@ -51,5 +51,7 @@
     <string name="ExplainConfigMargins">Configure thr screen margins to measure intruding objects</string>
     <string name="ExplainMeasureToEdgeAndroidVersionNotSupported">Your android version only support measuring intruding objects in portrait-modus</string>
     <string name="MeasuredValueToLong">The measured value is too large for the current scale!</string>
+    <string name="HowToMeasureEndless">To measure objects of any length, extend the scale after each segment.</string>
+    <string name="DoNotShowAgain">Do not show again</string>
 
 </resources>

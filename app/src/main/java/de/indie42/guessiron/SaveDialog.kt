@@ -8,10 +8,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -116,5 +124,60 @@ fun SaveDialog(
 @Preview(showBackground = true)
 @Composable
 fun DialogPreview() {
-    SaveDialog(measuredValue = 123, measuredUnit = "mm", onDismissRequest = {}, onConfirmation = {})
+    //SaveDialog(measuredValue = 123, measuredUnit = "mm", onDismissRequest = {}, onConfirmation = {})
+
+    ElevatedCard(
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 6.dp
+        )
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+
+                ExtendedFloatingActionButton(
+                    modifier = Modifier.padding(16.dp),
+                    onClick = {
+
+                    },
+                    icon = {
+                        Icon(
+                            Icons.Filled.Add,
+                            "Extended floating action button."
+                        )
+                    },
+                    text = { Text(text = "123 mm") },
+                )
+            }
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedIconButton(
+                    modifier = Modifier.padding(8.dp),
+                    onClick = { },
+                ) {
+                    Icon(Icons.Filled.BrightnessAuto, "Floating action button.")
+                }
+                OutlinedIconButton(
+                    modifier = Modifier.padding(8.dp),
+                    onClick = {  },
+                ) {
+                    Icon(Icons.Filled.RestartAlt, "Floating action button.")
+                }
+                OutlinedIconButton(
+                    modifier = Modifier.padding( 8.dp),
+                    onClick = {  },
+                ) {
+                    Icon(Icons.Filled.Remove, "Floating action button.")
+                }
+            }
+        }
+    }
 }

@@ -31,6 +31,12 @@ class GuessIronDataRepository(private val guessIronDataDataStore: DataStore<Gues
         }
     }
 
+    suspend fun disableEndlessMeasureHowTo() {
+        guessIronDataDataStore.updateData { currentPreferences ->
+            currentPreferences.toBuilder().setHowToEndlessDisabled(true).build()
+        }
+    }
+
     suspend fun changeDisplayBorder( displayBorder: DisplayBorder ) {
         guessIronDataDataStore.updateData { currentPreferences ->
             currentPreferences.toBuilder().setDisplayBorder(displayBorder).build()
@@ -54,6 +60,13 @@ class GuessIronDataRepository(private val guessIronDataDataStore: DataStore<Gues
             currentPreferences.toBuilder().setScalaOffsetActive(scalaOffsetActive).build()
         }
     }
+
+    suspend fun changeEndlessModeActive(endlessModeActive: Boolean) {
+        guessIronDataDataStore.updateData { currentPreferences ->
+            currentPreferences.toBuilder().setEndlessModeActive(endlessModeActive).build()
+        }
+    }
+
 
     suspend fun changeSortBy(sort: GuessIronData.SortOrder) {
         guessIronDataDataStore.updateData { currentPreferences ->

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -70,6 +71,8 @@ fun ScalaCalibrationScreen(mode: Int = 0, viewModel: GuessIronViewModel, onBack:
     val configuration = LocalConfiguration.current
     val isLandsacpe = Configuration.ORIENTATION_LANDSCAPE == configuration.orientation
 
+    val winInsetsSystembars = dynamicSystemBar(isLandsacpe)
+
     var displayRotation = android.view.Surface.ROTATION_0
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         displayRotation = LocalContext.current.display?.rotation ?: android.view.Surface.ROTATION_0
@@ -86,61 +89,63 @@ fun ScalaCalibrationScreen(mode: Int = 0, viewModel: GuessIronViewModel, onBack:
     val minFactor = 0.5F
     val maxFactor = 3.0F
 
-    DynamicSystemBar(isLandsacpe)
-
     Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                var switchTopForCenter = 0F
-                detectDragGestures(onDragStart = { offset ->
-                    switchTopForCenter = if (isLandsacpe)
-                        offset.x
-                    else
-                        offset.y
-                }) { _, dragAmount ->
-                    val dragLength = if (isLandsacpe)
-                        dragAmount.x
-                    else
-                        dragAmount.y
-
-                    var scalaOrientation = guessIronUiState.scalaDirection
-                    if (displayRotation == android.view.Surface.ROTATION_180 || displayRotation == android.view.Surface.ROTATION_270) {
-                        scalaOrientation = when (scalaOrientation) {
-                            ScalaDirection.Top -> ScalaDirection.Bottom
-                            ScalaDirection.Bottom -> ScalaDirection.Top
-                            else -> scalaOrientation
-                        }
-                    }
-
-                    val y = when (scalaOrientation) {
-                        ScalaDirection.Top -> dragLength
-                        ScalaDirection.Bottom -> dragLength * -1
-                        ScalaDirection.Center -> {
-                            val height = if (isLandsacpe)
-                                size.width
-                            else
-                                size.height
-                            if (switchTopForCenter < height / 2)
-                                dragLength * -1
-                            else
-                                dragLength
-                        }
-                    }
-                    if (caliMode != ScalaCalibrationMode.UnDef) {
-                        val scalaFactor = newScalaFactor + y / 2000
-                        newScalaFactor = if (scalaFactor < minFactor)
-                            minFactor
-                        else if (scalaFactor > maxFactor)
-                            maxFactor
+        modifier = Modifier.fillMaxSize()
+     ) {
+        Surface(
+            modifier = Modifier
+                .windowInsetsPadding(winInsetsSystembars)
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    var switchTopForCenter = 0F
+                    detectDragGestures(onDragStart = { offset ->
+                        switchTopForCenter = if (isLandsacpe)
+                            offset.x
                         else
-                            scalaFactor
-                    }
+                            offset.y
+                    }) { _, dragAmount ->
+                        val dragLength = if (isLandsacpe)
+                            dragAmount.x
+                        else
+                            dragAmount.y
 
-                }
-            },
-        color = MaterialTheme.colorScheme.background
-    ) {
+                        var scalaOrientation = guessIronUiState.scalaDirection
+                        if (displayRotation == android.view.Surface.ROTATION_180 || displayRotation == android.view.Surface.ROTATION_270) {
+                            scalaOrientation = when (scalaOrientation) {
+                                ScalaDirection.Top -> ScalaDirection.Bottom
+                                ScalaDirection.Bottom -> ScalaDirection.Top
+                                else -> scalaOrientation
+                            }
+                        }
+
+                        val y = when (scalaOrientation) {
+                            ScalaDirection.Top -> dragLength
+                            ScalaDirection.Bottom -> dragLength * -1
+                            ScalaDirection.Center -> {
+                                val height = if (isLandsacpe)
+                                    size.width
+                                else
+                                    size.height
+                                if (switchTopForCenter < height / 2)
+                                    dragLength * -1
+                                else
+                                    dragLength
+                            }
+                        }
+                        if (caliMode != ScalaCalibrationMode.UnDef) {
+                            val scalaFactor = newScalaFactor + y / 2000
+                            newScalaFactor = if (scalaFactor < minFactor)
+                                minFactor
+                            else if (scalaFactor > maxFactor)
+                                maxFactor
+                            else
+                                scalaFactor
+                        }
+
+                    }
+                },
+            color = MaterialTheme.colorScheme.background
+        ){
         ScalaBar(
             guessIronUiState.scalaDirection,
             ScalaPosition.Left,
@@ -153,7 +158,7 @@ fun ScalaCalibrationScreen(mode: Int = 0, viewModel: GuessIronViewModel, onBack:
             measuredMM = calibratingDistance,
             scalaFactor = newScalaFactor
         )
-
+        }
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center

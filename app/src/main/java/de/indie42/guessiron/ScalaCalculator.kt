@@ -149,7 +149,6 @@ class ScalaCalculator (
 
         val lineCounterLPosition = getLinePosition(lineCounter, drawSize)
 
-
         if (scalaDirection == ScalaDirection.Center && lineCounterLPosition == 0)
             return 7F
         else if (lineCounterLPosition % 10 == 0 ) {

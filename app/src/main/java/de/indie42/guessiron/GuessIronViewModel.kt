@@ -4,6 +4,14 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.util.TypedValue
 import android.view.Surface
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -16,17 +24,26 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 data class GuessIronUiState(
     val disclaimerDisabled: Boolean = true,
+    val endlessMeasureHowToDisabled: Boolean = true,
     val scalaDirection: ScalaDirection,
     val scalaFactor: Float = 1F,
     val scalaOffset: Int = 0,
     val scalaOffsetActive: Boolean = false,
+    val scalaOffsetTop: Int = 0,
+    val scalaOffsetBottom: Int = 0,
+    val endlessModeActive: Boolean = false,
     val measuredPixel: Float = 0F,
     val measuredDistance: Int = 0,
+    val endlessValue: Int = 0,
     val measuredUnit: String = "mm",
+    val scalaOffsetAnimation: AnimationSpec<Int> = snap(),
+    val sizeInDp: Int = 0,
+    val sizeInMM: Int = 0
 )
 
 data class GuessIronDataState(
@@ -73,13 +90,22 @@ class GuessIronViewModel(
 
             val measuredDistanceWithOffset = currentState.measuredDistance - getCurrentScalaOffset(item.scalaOffsetActive, scalaOffset)
 
+            val offset = if (item.scalaOffsetActive)item.displayBorder.top + item.displayBorder.bottom else 0
+
             currentState.copy(
                 disclaimerDisabled = item.disclaimerDisabled,
+                endlessMeasureHowToDisabled = item.howToEndlessDisabled,
                 scalaFactor = currentScalaFactor,
                 scalaDirection = scalaDirection,
                 scalaOffset = scalaOffset,
                 scalaOffsetActive = item.scalaOffsetActive,
-                measuredPixel = calculatePixelFromMM(measuredDistanceWithOffset)
+                scalaOffsetTop = item.displayBorder.top,
+                scalaOffsetBottom = item.displayBorder.bottom,
+                endlessModeActive = item.endlessModeActive,
+                endlessValue = if (item.endlessModeActive) currentState.endlessValue else 0,
+                measuredPixel = calculatePixelFromMM(measuredDistanceWithOffset),
+                scalaOffsetAnimation = snap(),
+                sizeInMM = calculateMMFromPixel(currentState.sizeInDp.toFloat(), offset)
             )
         }
     }
@@ -106,10 +132,14 @@ class GuessIronViewModel(
         }
     }
 
-    private val displayMetrics = Resources.getSystem().displayMetrics
+    //private val displayMetrics = Resources.getSystem().displayMetrics
 
     suspend fun toggleScalaOffset(toggleScalaOffset: Boolean) {
         guessIronDataRepository.changeScalaOffsetActive(!toggleScalaOffset)
+    }
+
+    suspend fun toggleEndlessMode(toggleEndlessMode: Boolean) {
+        guessIronDataRepository.changeEndlessModeActive(!toggleEndlessMode)
     }
 
     suspend fun switchScala(scalaDirection: ScalaDirection) {
@@ -146,6 +176,10 @@ class GuessIronViewModel(
 
     suspend fun disableDisclaimer() {
         guessIronDataRepository.disableDisclaimer()
+    }
+
+    suspend fun disableEndlessMeasureHowTo() {
+        guessIronDataRepository.disableEndlessMeasureHowTo()
     }
 
     suspend fun changeSortBy(sort: GuessIronData.SortOrder) {
@@ -276,7 +310,32 @@ class GuessIronViewModel(
 
             currentState.copy(
                 measuredPixel = measuredPixel,
-                measuredDistance = millimeter
+                measuredDistance = millimeter,
+                endlessValue = 0
+            )
+        }
+    }
+
+    fun setSizeInDp(sizeinDp: Int) {
+
+        _uiState.update { currentState ->
+
+            val offset = if (currentState.scalaOffsetActive) currentState.scalaOffsetTop + currentState.scalaOffsetBottom else 0
+
+            currentState.copy(
+                sizeInDp = sizeinDp,
+                sizeInMM = calculateMMFromPixel(sizeinDp.toFloat(), offset)
+            )
+        }
+    }
+
+    fun setMeasuredEndlessStepValue(millimeter: Int) {
+
+        _uiState.update { currentState ->
+
+            currentState.copy(
+                endlessValue = if (millimeter < 0 ) 0 else millimeter,
+                scalaOffsetAnimation = tween(durationMillis = 750, easing = LinearOutSlowInEasing)
             )
         }
     }
@@ -286,7 +345,7 @@ class GuessIronViewModel(
         val dpmm = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_MM,
             currentScalaFactor,
-            displayMetrics
+            Resources.getSystem().displayMetrics
         )
 
         return dpmm * millimeter.toFloat()
@@ -297,7 +356,7 @@ class GuessIronViewModel(
         val dpmm = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_MM,
             currentScalaFactor,
-            displayMetrics
+            Resources.getSystem().displayMetrics
         )
 
         val measuredMM = (measuredPixel / dpmm).roundToInt() + offsetMM

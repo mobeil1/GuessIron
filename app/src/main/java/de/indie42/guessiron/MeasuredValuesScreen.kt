@@ -18,6 +18,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -311,19 +312,25 @@ fun MeasuredValuesScreen(
                             modifier = Modifier
                                 .padding(8.dp)
                                 .fillMaxWidth(),
-                            Arrangement.SpaceBetween
+                            Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
 
-                            Button(
-                                onClick = {
-                                    scope.launch {
-                                        viewModel.setMeasuredValue(measuredValue.measured)
-                                        showMenuDialog = false
-                                        onBack()
-                                    }
-                                },
-                            ) {
-                                Text(text = stringResource(id = R.string.Show))
+                            if (measuredValue.measureType == MeasuredValue.MeasureType.Single){
+                                Button(
+                                    onClick = {
+                                        scope.launch {
+                                            viewModel.setMeasuredValue(measuredValue.measured)
+                                            showMenuDialog = false
+                                            onBack()
+                                        }
+                                    },
+                                ) {
+                                    Text(text = stringResource(id = R.string.Show))
+                                }
+                            }
+                            else {
+                                Icon(imageVector = Icons.Filled.Repeat, contentDescription = "")
                             }
                             Row(horizontalArrangement = Arrangement.End) {
                                 IconButton(

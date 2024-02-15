@@ -3,7 +3,7 @@
 
     <string name="app_name">GuessIron</string>
     <string name="hello">Hallo</string>
-    <string name="measured">Gemessen</string>
+    <string name="measured">Messungen</string>
     <string name="settings">Einstellungen</string>
     <string name="calibration">Kalibrieren</string>
     <string name="continue_without_calibration">Weiter, ohne Kalibrierung</string>
@@ -16,7 +16,7 @@
     <string name="Name">Name</string>
     <string name="Distance">Entfernung</string>
     <string name="Name_example">Schraube</string>
-    <string name="Save_Measured_Text">Messung speichern</string>
+    <string name="Save_Measured_Text">Messwert speichern</string>
     <string name="Show">Anzeigen</string>
     <string name="Measured_Value_Saved">Wert gespeichert</string>
     <string name="Rename">Umbenennen</string>
@@ -29,7 +29,7 @@
     <string name="SwitchScala">Skala umschalten</string>
     <string name="SaveMeasuredValue">Messung speichern</string>
     <string name="StartCalibration">Kalibrierung starten</string>
-    <string name="ShowMeasuredValues">Gespeicherte Werte anzeigen</string>
+    <string name="ShowMeasuredValues">Messungen anzeigen</string>
     <string name="AskHowToCalibrate">Wie möchten Sie kalibrieren?</string>
     <string name="WithARuler">Mit einem Lineal</string>
     <string name="WithACreditcard">Mit einer Bankkarte</string>
@@ -53,5 +53,7 @@
     <string name="ExplainConfigMargins">Damit abstehende Gegenstände gemessen werden können, müssen zuerst die Bildschrimränder konfiguriert werden</string>
     <string name="ExplainMeasureToEdgeAndroidVersionNotSupported">Deine Android-Version unterstützt die Messung abstehender Gegenstände nur im Hochformat (Portrait-Modus)</string>
     <string name="MeasuredValueToLong">Der gemessene Wert ist zu groß für die aktuelle Skala!</string>
+    <string name="HowToMeasureEndless">"Um beliebig lange Objekte zu messen, verlängern sie die Skala nach jedem Teilstück"</string>
+    <string name="DoNotShowAgain">Nicht mehr anzeigen</string>
 
 </resources>

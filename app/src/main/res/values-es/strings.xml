@@ -4,7 +4,7 @@
       
   <string name="hello">Hola</string>
       
-  <string name="measured">Medido</string>
+  <string name="measured">Medidas</string>
       
   <string name="settings">Ajustes</string>
       
@@ -56,7 +56,7 @@
       
   <string name="StartCalibration">Iniciar calibración</string>
       
-  <string name="ShowMeasuredValues">Mostrar valores medidos</string>
+  <string name="ShowMeasuredValues">Mostrar medidas</string>
       
   <string name="AskHowToCalibrate">¿Cómo le gustaría calibrar?</string>
       
@@ -101,5 +101,8 @@
   <string name="ExplainMeasureToEdgeAndroidVersionNotSupported">Su versión de Android solo admite la medición de objetos intrusos en modo vertical</string>
       
   <string name="MeasuredValueToLong">¡El valor medido es demasiado grande para la escala actual!</string>
+
+  <string name="HowToMeasureEndless">Para medir objetos de cualquier longitud, extienda la escala después de cada segmento.</string>
+  <string name="DoNotShowAgain">No volver a mostrar</string>
   
 </resources>

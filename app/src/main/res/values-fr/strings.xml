@@ -4,7 +4,7 @@
       
   <string name="hello">Bonjour</string>
       
-  <string name="measured">Mesuré</string>
+  <string name="measured">Mesures</string>
       
   <string name="settings">Paramètres</string>
       
@@ -56,7 +56,7 @@
       
   <string name="StartCalibration">Démarrer l\'étalonnage</string>
       
-  <string name="ShowMeasuredValues">Afficher les valeurs mesurées</string>
+  <string name="ShowMeasuredValues">Afficher les mesures</string>
       
   <string name="AskHowToCalibrate">Comment souhaitez-vous calibrer ?</string>
       
@@ -101,5 +101,9 @@
   <string name="ExplainMeasureToEdgeAndroidVersionNotSupported">Votre version Android ne prend en charge que la mesure des objets intrus en mode portrait</string>
       
   <string name="MeasuredValueToLong">La valeur mesurée est trop grande pour l\'échelle actuelle !</string>
+
+  <string name="HowToMeasureEndless">Pour mesurer des objets de n\'importe quelle longueur, prolongez l\'échelle après chaque segment.</string>
+
+  <string name="DoNotShowAgain">Ne plus montrer</string>
   
 </resources>
