@@ -37,6 +37,12 @@ message DisplayBorder {
   int32 bottom = 2;
 }
 
+message AutomaticSetting {
+  float sensitivity = 1;
+  int32 settlingTime = 2;
+  bool disableInfo = 3;
+}
+
 message GuessIronData {
 
   bool disclaimer_disabled = 1;
@@ -62,5 +68,7 @@ message GuessIronData {
   bool endlessModeActive = 8;
 
   bool howToEndlessDisabled = 9;
+
+  AutomaticSetting automacticSetting = 10;
 
 }

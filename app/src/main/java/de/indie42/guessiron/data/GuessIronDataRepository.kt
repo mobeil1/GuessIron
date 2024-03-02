@@ -43,6 +43,30 @@ class GuessIronDataRepository(private val guessIronDataDataStore: DataStore<Gues
         }
     }
 
+    suspend fun disableEndlessAutomaticInfo() {
+        guessIronDataDataStore.updateData { currentPreferences ->
+            val currentAutomaticSetting = currentPreferences.automacticSetting;
+            val newAutomaticSetting = currentAutomaticSetting.toBuilder().setDisableInfo(true).build()
+            currentPreferences.toBuilder().setAutomacticSetting(newAutomaticSetting).build()
+        }
+    }
+
+    suspend fun changeSensitivity(sensitivity: Float ) {
+        guessIronDataDataStore.updateData { currentPreferences ->
+            val currentAutomaticSetting = currentPreferences.automacticSetting;
+            val newAutomaticSetting = currentAutomaticSetting.toBuilder().setSensitivity(sensitivity).build()
+            currentPreferences.toBuilder().setAutomacticSetting(newAutomaticSetting).build()
+        }
+    }
+
+    suspend fun changeSettlingTime( settlingTime: Int ) {
+        guessIronDataDataStore.updateData { currentPreferences ->
+            val currentAutomaticSetting = currentPreferences.automacticSetting;
+            val newAutomaticSetting = currentAutomaticSetting.toBuilder().setSettlingTime(settlingTime).build()
+            currentPreferences.toBuilder().setAutomacticSetting(newAutomaticSetting).build()
+        }
+    }
+
     suspend fun changeScalaFactor(scalaFactor: Float) {
         guessIronDataDataStore.updateData { currentPreferences ->
             currentPreferences.toBuilder().setScalaFactor(scalaFactor).build()

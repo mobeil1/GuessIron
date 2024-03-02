@@ -105,5 +105,18 @@
   <string name="HowToMeasureEndless">Pour mesurer des objets de n\'importe quelle longueur, prolongez l\'échelle après chaque segment.</string>
 
   <string name="DoNotShowAgain">Ne plus montrer</string>
-  
+
+  <string name="AutomaticSetting">Automatique</string>
+  <string name="Low">Faible</string>
+  <string name="Middle">Moyen</string>
+  <string name="High">Haute</string>
+  <string name="Seconds">Seconde(s)</string>
+  <string name="EndlessAutomaticInfo">Lors de la mesure d\'objets longs, GuessIron peut reconnaître le déplacement du téléphone portable et décaler automatiquement l\'échelle.</string>
+  <string name="Sensitivity">Sensibilité</string>
+  <string name="SensitivityInfo">La sensibilité indique la vitesse à laquelle le téléphone portable doit être déplacé pour déclencher la fonction automatique.</string>
+  <string name="SettlingTime">Temps d\'installation</string>
+  <string name="SettlingTimeInfo">Le temps de stabilisation indique la durée pendant laquelle le téléphone portable doit être maintenu immobile pour que l\'échelle se déplace après un mouvement.</string>
+  <string name="EndlessAutomaticInfoTurnOff">Afin que le système automatique n\'interfère pas avec le fonctionnement de GuessIron, il s\'éteint lorsqu\'il n\'est plus nécessaire.</string>
+
+
 </resources>

@@ -56,4 +56,15 @@
     <string name="HowToMeasureEndless">"Um beliebig lange Objekte zu messen, verlängern sie die Skala nach jedem Teilstück"</string>
     <string name="DoNotShowAgain">Nicht mehr anzeigen</string>
 
+    <string name="AutomaticSetting">Automatik</string>
+    <string name="Low">Niedrig</string>
+    <string name="Middle">Mittel</string>
+    <string name="High">Hoch</string>
+    <string name="Seconds">Sekunde(n)</string>
+    <string name="EndlessAutomaticInfo">GuessIron kann beim Messen langer Objekte erkennen, wann das Handy bewegt wird und die Skala automatisch verschieben.</string>
+    <string name="EndlessAutomaticInfoTurnOff">Damit die Automatik bei der Bedienung von GuessIron nicht stört, schaltet sie sich ab, wenn sie nicht mehr gebraucht wird</string>
+    <string name="Sensitivity">Empfindlichkeit</string>
+    <string name="SensitivityInfo">Die Empfindlichkeit gibt an, wie schnell das Handy bewegt werden muss, um die Automatik auszulösen.</string>
+    <string name="SettlingTime">Beruhigungszeit</string>
+    <string name="SettlingTimeInfo">Die Beruhigungszeit gibt an, wie lange das Handy ruhig gehalten werden muss, um die Skala nach einer Bewegung zu verschieben.</string>
 </resources>

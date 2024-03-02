@@ -7,6 +7,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.animateValue
 import androidx.compose.animation.core.infiniteRepeatable
@@ -41,6 +42,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoMode
 import androidx.compose.material.icons.filled.Dock
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RestartAlt
@@ -56,6 +58,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Snackbar
@@ -80,9 +83,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -124,6 +131,7 @@ fun GuessIronScreen(
     onShowDisclaimer: () -> Unit,
     onShowCalibration: () -> Unit,
     onConfigDisplayBorder: () -> Unit,
+    onConfigEndlessAutomatic: () -> Unit,
     viewModel: GuessIronViewModel = viewModel(),
 ) {
 
@@ -139,6 +147,7 @@ fun GuessIronScreen(
     var showMeasuredValueToBig by rememberSaveable { mutableStateOf(false) }
     var showMoreMenu by rememberSaveable { mutableStateOf(false) }
     var showHowToEndless by rememberSaveable { mutableStateOf(false) }
+    var showEndlessAutomaticInfo by rememberSaveable { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -152,6 +161,10 @@ fun GuessIronScreen(
 
     var displayRotation by remember {
         mutableIntStateOf(android.view.Surface.ROTATION_0)
+    }
+
+    val acc = rememberSensorState( isLandsacpe = isLandsacpe, sensitivity = guessIronState.endlessAutomaticSensitivity, settlingTime = guessIronState.endlessAutomaticSettlingTime){
+        viewModel.autoIncEndlessStepValue()
     }
 
 
@@ -173,8 +186,6 @@ fun GuessIronScreen(
     var sizeInDp by remember { mutableStateOf(IntSize.Zero) }
 
     val scaleOffsetTotal: Int by animateIntAsState(getScalaOffset(guessIronState), label = "a", animationSpec = guessIronState.scalaOffsetAnimation)
-
-    //val acc = rememberSensorState();
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -215,6 +226,8 @@ fun GuessIronScreen(
                                     sizeInDp,
                                     displayRotation
                                 )
+                            if (acc.active.value)
+                                acc.deactivateAutomatic()
                         }
                     }
                     .pointerInput(Unit) {
@@ -225,6 +238,9 @@ fun GuessIronScreen(
                                     sizeInDp,
                                     displayRotation
                                 )
+
+                                if (acc.active.value)
+                                    acc.deactivateAutomatic()
                             }
                         else
                             detectTapGestures { offset ->
@@ -233,6 +249,9 @@ fun GuessIronScreen(
                                     sizeInDp,
                                     displayRotation
                                 )
+
+                                if (acc.active.value)
+                                    acc.deactivateAutomatic()
                             }
 
                     },
@@ -273,6 +292,7 @@ fun GuessIronScreen(
                         ){
                         MainMenu(
                             guessIronState,
+                            acc,
                             scope,
                             viewModel,
                             true,
@@ -285,14 +305,19 @@ fun GuessIronScreen(
                             showHowToEndless = {if (!guessIronState.endlessMeasureHowToDisabled)
                                 showHowToEndless = !guessIronState.endlessModeActive
                             },
-                            showMoreMenu = { showMoreMenu = true }
+                            showMoreMenu = {
+                                acc.deactivateAutomatic()
+                                showMoreMenu = true
+                            }
                         )
                         }
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ){
-                            MeasureEnlessMenu(guessIronState, scope, viewModel, guessIronState.sizeInMM, /*acc,*/ isLandsacpe = true)
+                            MeasureEnlessMenu(guessIronState, acc, scope, viewModel, guessIronState.sizeInMM, isLandsacpe = true, onShowInfo = {
+                                showEndlessAutomaticInfo = true
+                            })
                         }
 
                     }
@@ -300,6 +325,7 @@ fun GuessIronScreen(
                 else {
                     MainMenu(
                         guessIronState,
+                        acc,
                         scope,
                         viewModel,
                         false,
@@ -313,9 +339,13 @@ fun GuessIronScreen(
                             if (!guessIronState.endlessMeasureHowToDisabled)
                                 showHowToEndless = !guessIronState.endlessModeActive
                         },
-                        showMoreMenu = { showMoreMenu = true }
+                        showMoreMenu = {
+                            acc.deactivateAutomatic()
+                            showMoreMenu = true }
                     )
-                    MeasureEnlessMenu(guessIronState, scope, viewModel, guessIronState.sizeInMM, /*acc,*/ isLandsacpe = false)
+                    MeasureEnlessMenu(guessIronState, acc, scope, viewModel, guessIronState.sizeInMM, isLandsacpe = false, onShowInfo = {
+                        showEndlessAutomaticInfo = true
+                    })
                 }
             }
         }
@@ -324,6 +354,12 @@ fun GuessIronScreen(
             HowToEndless(guessIronState.sizeInMM, onDismiss = { showHowToEndless = false }, onDisableHowTo = {
                 scope.launch { viewModel.disableEndlessMeasureHowTo() }
             }, isLandsacpe = isLandsacpe)
+        }
+
+        if (showEndlessAutomaticInfo) {
+            HowToEndlessAutomatic(onDismiss = { showEndlessAutomaticInfo = false }, onDisableHowTo = {
+                scope.launch { viewModel.disableEndlessAutomaticInfo() }
+            }, isLandsacpe)
         }
 
         if (showMoreMenu) {
@@ -344,6 +380,10 @@ fun GuessIronScreen(
                 onShowScreenBorder = {
                     showMoreMenu = false
                     onConfigDisplayBorder()
+                },
+                onShowConfigEndlessAutomatic = {
+                    showMoreMenu = false
+                    onConfigEndlessAutomatic()
                 }
             )
         }
@@ -496,6 +536,7 @@ fun GuessIronScreen(
 @Composable
 private fun MainMenu(
     guessIronState: GuessIronUiState,
+    acc: EndlessAutomaticState,
     scope: CoroutineScope,
     viewModel: GuessIronViewModel,
     isLandsacpe: Boolean,
@@ -520,6 +561,8 @@ private fun MainMenu(
         scalaDirection = guessIronState.scalaDirection,
         onClickSwitchScala = {
             scope.launch {
+                acc.deactivateAutomatic()
+
                 viewModel.switchScala(guessIronState.scalaDirection)
             }
         },
@@ -528,6 +571,7 @@ private fun MainMenu(
             if (guessIronState.scalaDirection != ScalaDirection.Center && !guessIronState.scalaOffsetActive && guessIronState.scalaOffset == 0) {
                 showConfigureDisplayBorder()
             } else {
+                acc.deactivateAutomatic()
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R && isLandsacpe) {
                     showMeasureToEdgeNotSupported()
                 } else {
@@ -543,6 +587,8 @@ private fun MainMenu(
                 showHowToEndless()
 
                 viewModel.toggleEndlessMode(guessIronState.endlessModeActive)
+
+                acc.deactivateAutomatic()
             }
         },
         onMore = showMoreMenu,
@@ -554,11 +600,12 @@ private fun MainMenu(
 @Composable
 private fun ColumnScope.MeasureEnlessMenu(
     guessIronState: GuessIronUiState,
+    acc: EndlessAutomaticState,
     scope: CoroutineScope,
     viewModel: GuessIronViewModel,
     heightInMM: Int,
-    /*acc: EndlessAutomaticState,*/
-    isLandsacpe: Boolean
+    isLandsacpe: Boolean,
+    onShowInfo: () -> Unit
 ) {
 
     val aniEnterDirection = if ( isLandsacpe ) fadeIn() + expandHorizontally() else fadeIn() + expandVertically()
@@ -570,6 +617,7 @@ private fun ColumnScope.MeasureEnlessMenu(
                 defaultElevation = 6.dp
             )
         ) {
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
@@ -604,19 +652,30 @@ private fun ColumnScope.MeasureEnlessMenu(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-//                    IconButton(
-//                        modifier = Modifier.padding(start = 8.dp),
-//                        colors = if (acc.active.value) IconButtonDefaults.iconButtonColors(
-//                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-//                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-//                        ) else IconButtonDefaults.iconButtonColors(),
-//                        onClick = { acc.activatedAutomatic(!acc.active.value) },
-//                    ) {
-//                        Icon(Icons.Filled.BrightnessAuto, "Floating action button.")
-//                    }
+                    IconButton(
+                        modifier = Modifier.padding(start = 8.dp),
+                        colors = if (acc.active.value) IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ) else IconButtonDefaults.iconButtonColors(),
+                        onClick = {
+
+                            if (!guessIronState.endlessAutomaticInfoDisabled)
+                                onShowInfo()
+
+                            if (!acc.active.value)
+                                acc.activateAutomatic(guessIronState.endlessAutomaticSensitivity, guessIronState.endlessAutomaticSettlingTime)
+                            else
+                                acc.deactivateAutomatic()},
+                    ) {
+                        Icon(Icons.Filled.AutoMode, "Floating action button.")
+                    }
                     IconButton(
                         modifier = Modifier.padding(8.dp),
-                        onClick = { viewModel.setMeasuredEndlessStepValue(0) },
+                        onClick = {
+                            viewModel.setMeasuredEndlessStepValue(0)
+                            viewModel.setMeasuredValue(0)
+                                  },
                     ) {
                         Icon(Icons.Filled.RestartAlt, "Floating action button.")
                     }
@@ -637,6 +696,56 @@ private fun ColumnScope.MeasureEnlessMenu(
 @Composable
 fun MoreMenuPreview() {
     HowToEndless(heightInMM = 456, onDismiss = {}, onDisableHowTo = {}, isLandsacpe = true)
+}
+
+@Composable
+fun HowToEndlessAutomatic(onDismiss: () -> Unit, onDisableHowTo: () -> Unit, isLandsacpe: Boolean) {
+    val (checkedState, onStateChange) = remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Column {
+                if (isLandsacpe){
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Column(
+                            modifier = Modifier,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            MeasureEndlessAutomaticText(
+                                checkedState,
+                                onStateChange,
+                                onDisableHowTo,
+                                onDismiss
+                            )
+                        }
+                    }
+                }
+                else {
+                    MeasureEndlessAutomaticAnimation()
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center) {
+                        MeasureEndlessAutomaticText(
+                            checkedState,
+                            onStateChange,
+                            onDisableHowTo,
+                            onDismiss
+                        )
+
+                    }
+                }
+            }
+        }
+
+    }
 }
 
 @Composable
@@ -697,6 +806,127 @@ private fun MeasureEndlessText(
         style = MaterialTheme.typography.bodyLarge
     )
 
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checkedState,
+                onValueChange = { onStateChange(!checkedState) },
+                role = Role.Checkbox
+            )
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = checkedState,
+            onCheckedChange = null // null recommended for accessibility with screenreaders
+        )
+        Text(
+            text = stringResource(id = R.string.DoNotShowAgain),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(start = 16.dp)
+        )
+    }
+    Button(
+        modifier = Modifier.padding(bottom = 8.dp),
+        onClick = {
+            if (checkedState)
+                onDisableHowTo()
+
+            onDismiss()
+        }) {
+        Text(text = stringResource(id = R.string.Ok))
+    }
+}
+
+@Composable
+fun MeasureEndlessAutomaticAnimation() {
+    val infiniteTransition = rememberInfiniteTransition(label = "l1")
+
+    val iconPosition by infiniteTransition.animateValue(
+        initialValue = 0.dp,
+        targetValue = 90.dp,
+        typeConverter = Dp.VectorConverter,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 3000
+                0.dp at 0
+                90.dp at 1000 // ms
+            },
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "scale"
+    )
+
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0F,
+        targetValue = 24F,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 3000
+                0F at 0
+                0F at 1500
+                24F at 2000
+            },
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "scale"
+    )
+
+    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+
+    Surface(
+        modifier = Modifier
+            .padding(top = 8.dp, start = iconPosition)
+            .size(150.dp, 100.dp),
+        color = Color.Transparent
+    ) {
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Box(modifier = Modifier
+                .drawBehind {
+                    val myPath = Path().apply {
+                        addRoundRect(
+                            RoundRect(
+                                rect = Rect(
+                                    offset = Offset(0.dp.toPx(), 4.dp.toPx()),
+                                    size = Size(150.dp.toPx(), 90.dp.toPx())
+                                ),
+                                topLeft = CornerRadius(50F, 50F),
+                                topRight = CornerRadius(50F, 50F),
+                                bottomLeft = CornerRadius(50F, 50F),
+                                bottomRight = CornerRadius(50F, 50F),
+                            )
+                        )
+                    }
+                    drawPath(myPath, color = primaryContainer)
+
+                }
+                .padding(16.dp)){
+                val offset = if (scale > 23.5) 24 else scale.toInt()
+                ScalaBar(direction = ScalaDirection.Bottom, scalaStartMM = offset, scalaFactor = 0.7F, forceLandscape = true)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MeasureEndlessAutomaticText(
+    checkedState: Boolean,
+    onStateChange: (Boolean) -> Unit,
+    onDisableHowTo: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Text(
+        modifier = Modifier.padding(8.dp),
+        text = stringResource(id = R.string.EndlessAutomaticInfo),
+        style = MaterialTheme.typography.bodyLarge
+    )
+    Text(
+        modifier = Modifier.padding(8.dp),
+        text = stringResource(id = R.string.EndlessAutomaticInfoTurnOff),
+        style = MaterialTheme.typography.bodyLarge
+    )
     Row(
         Modifier
             .fillMaxWidth()
@@ -842,6 +1072,7 @@ private fun MoreMenu(
     onClickShowMeasured: () -> Unit,
     onShowCalibration: () -> Unit,
     onShowScreenBorder: () -> Unit,
+    onShowConfigEndlessAutomatic: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
 
@@ -860,13 +1091,14 @@ private fun MoreMenu(
                 Row {Text(text = stringResource(id = R.string.settings), color = MaterialTheme.colorScheme.onPrimaryContainer) }
                 MoreMenuItem(onClickable = onShowCalibration, icon = Icons.Filled.ZoomOutMap, text = stringResource(id = R.string.calibration))
                 MoreMenuItem(onClickable = onShowScreenBorder, icon = Icons.Filled.Dock, text = stringResource(id = R.string.ScreenMargin))
+                MoreMenuItem(onClickable = onShowConfigEndlessAutomatic, icon = Icons.Filled.AutoMode, text = stringResource(id = R.string.AutomaticSetting))
             }
         }
     }
 }
 
 @Composable
-fun MoreMenuItem( onClickable: () -> Unit, icon: ImageVector, text: String) {
+fun MoreMenuItem( onClickable: () -> Unit, icon: ImageVector, rotateIcon: Float = 0F, text: String) {
     Row(
         modifier = Modifier
             .padding(horizontal = 12.dp, vertical = 8.dp)
@@ -875,7 +1107,7 @@ fun MoreMenuItem( onClickable: () -> Unit, icon: ImageVector, text: String) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            icon, modifier = Modifier.rotate(180F),
+            icon, modifier = Modifier.rotate(rotateIcon),
             contentDescription = stringResource(id = R.string.ScreenMargin),
         )
 

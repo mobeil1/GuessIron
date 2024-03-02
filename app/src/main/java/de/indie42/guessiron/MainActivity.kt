@@ -26,7 +26,7 @@ val Context.guessIronDataStore : DataStore<GuessIronData> by dataStore(fileName 
 private lateinit var viewModel: GuessIronViewModel
 
 enum class GuessIronRoutes ( val path: String) {
-    Main("main"), Measured("measured"), MeasureToEdgeSetting("MeasureToEdgeCalibration"), MeasureToEdgeCalibration("MeasureToEdgeCalibration/{direction}/{startOffset}"), CalibrationOverview("calibration"), CalibrationMode("calibration/{mode}"), Disclaimer("disclaimer")/*, CameraMeasure("CameraMeasure")*/
+    Main("main"), Measured("measured"), MeasureToEdgeSetting("MeasureToEdgeCalibration"), MeasureToEdgeCalibration("MeasureToEdgeCalibration/{direction}/{startOffset}"), CalibrationOverview("calibration"), CalibrationMode("calibration/{mode}"), AutomaticSetting("automaticSetting"), Disclaimer("disclaimer")/*, CameraMeasure("CameraMeasure")*/
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -69,6 +69,9 @@ class MainActivity : ComponentActivity() {
                             onConfigDisplayBorder = {
                                 navController.navigateSingleTopTo(GuessIronRoutes.MeasureToEdgeSetting.path)
                             },
+                            onConfigEndlessAutomatic = {
+                                navController.navigateSingleTopTo(GuessIronRoutes.AutomaticSetting.path)
+                            },
                             viewModel = viewModel)
                     }
                     composable(route = GuessIronRoutes.Measured.path) {
@@ -82,6 +85,12 @@ class MainActivity : ComponentActivity() {
 //                            onBack = { navController.popBackStack() }
 //                        )
 //                    }
+                    composable(route = GuessIronRoutes.AutomaticSetting.path) {
+                        AutomaticSettingScreen(
+                            viewModel = viewModel,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                     composable(route = GuessIronRoutes.CalibrationOverview.path) {
                         ScalaCalibrationOverviewScreen(
                             viewModel = viewModel,

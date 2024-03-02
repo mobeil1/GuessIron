@@ -39,10 +39,11 @@ fun ScalaBar(
     scalaStartMM: Int = 0,
     scalaFactor: Float = 1F,
     supportLandscapeMode: Boolean = true,
+    forceLandscape: Boolean = false
     ) {
 
     val configuration = LocalConfiguration.current
-    val isLandsacpe = Configuration.ORIENTATION_LANDSCAPE == configuration.orientation && supportLandscapeMode
+    val isLandsacpe = if (forceLandscape) true else Configuration.ORIENTATION_LANDSCAPE == configuration.orientation && supportLandscapeMode
 
     var rotationDirection = direction
 

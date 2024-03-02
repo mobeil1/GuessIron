@@ -53,5 +53,15 @@
     <string name="MeasuredValueToLong">The measured value is too large for the current scale!</string>
     <string name="HowToMeasureEndless">To measure objects of any length, extend the scale after each segment.</string>
     <string name="DoNotShowAgain">Do not show again</string>
-
+    <string name="AutomaticSetting">Automatic</string>
+    <string name="Low">Low</string>
+    <string name="Middle">Middle</string>
+    <string name="High">High</string>
+    <string name="Seconds">Second(s)</string>
+    <string name="EndlessAutomaticInfo">When measuring long objects, GuessIron can recognize when the cell phone is moved and automatically shift the scale</string>
+    <string name="Sensitivity">Sensitivity</string>
+    <string name="SensitivityInfo">The sensitivity indicates how quickly the cell phone must be moved to trigger the automatic function.</string>
+    <string name="SettlingTime">Settling time</string>
+    <string name="SettlingTimeInfo">The settling time indicates how long the cell phone must be held still to shift the scale after a movement.</string>
+    <string name="EndlessAutomaticInfoTurnOff">So that the automatic system does not interfere with the operation of GuessIron, it switches itself off when it is no longer needed</string>
 </resources>

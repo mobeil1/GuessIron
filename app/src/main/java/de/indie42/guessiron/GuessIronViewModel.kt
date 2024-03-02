@@ -4,13 +4,9 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.util.TypedValue
 import android.view.Surface
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.AnimationVector1D
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.ViewModel
@@ -43,17 +39,19 @@ data class GuessIronUiState(
     val measuredUnit: String = "mm",
     val scalaOffsetAnimation: AnimationSpec<Int> = snap(),
     val sizeInDp: Int = 0,
-    val sizeInMM: Int = 0
+    val sizeInMM: Int = 0,
+    val endlessAutomaticSensitivity: Float = 0.5F,
+    val endlessAutomaticSettlingTime: Int = 1000,
+    val endlessAutomaticInfoDisabled: Boolean = false
 )
 
 data class GuessIronDataState(
     val orderByDate: GuessIronData.SortOrder = GuessIronData.SortOrder.BY_Timestamp,
     val measuredValues: List<MeasuredValue> = arrayListOf(),
-    val displayBorder: DisplayBorder = DisplayBorder.getDefaultInstance()
+    val displayBorder: DisplayBorder = DisplayBorder.getDefaultInstance(),
 )
-
 class GuessIronViewModel(
-    private val guessIronDataRepository: GuessIronDataRepository
+    private val guessIronDataRepository: GuessIronDataRepository,
 ) : ViewModel() {
 
     private var currentScalaFactor = 1F
@@ -71,7 +69,7 @@ class GuessIronViewModel(
             GuessIronDataState(
                 measuredValues = sortMeasuredValues(item),
                 orderByDate = item.sortOrder,
-                displayBorder = item.displayBorder
+                displayBorder = item.displayBorder,
             )
 
         }
@@ -94,6 +92,7 @@ class GuessIronViewModel(
 
             currentState.copy(
                 disclaimerDisabled = item.disclaimerDisabled,
+                endlessAutomaticInfoDisabled = item.automacticSetting.disableInfo,
                 endlessMeasureHowToDisabled = item.howToEndlessDisabled,
                 scalaFactor = currentScalaFactor,
                 scalaDirection = scalaDirection,
@@ -105,7 +104,9 @@ class GuessIronViewModel(
                 endlessValue = if (item.endlessModeActive) currentState.endlessValue else 0,
                 measuredPixel = calculatePixelFromMM(measuredDistanceWithOffset),
                 scalaOffsetAnimation = snap(),
-                sizeInMM = calculateMMFromPixel(currentState.sizeInDp.toFloat(), offset)
+                sizeInMM = calculateMMFromPixel(currentState.sizeInDp.toFloat(), offset),
+                endlessAutomaticSensitivity = if ( item.automacticSetting.sensitivity > 0 ) item.automacticSetting.sensitivity else currentState.endlessAutomaticSensitivity,
+                endlessAutomaticSettlingTime = if ( item.automacticSetting.settlingTime >= 500 ) item.automacticSetting.settlingTime else currentState.endlessAutomaticSettlingTime
             )
         }
     }
@@ -164,6 +165,14 @@ class GuessIronViewModel(
 
     }
 
+    suspend fun changeAutomaticSensitivity(sensitivity: Float) {
+        guessIronDataRepository.changeSensitivity(sensitivity)
+    }
+
+    suspend fun changeAutomaticSettlingTime(settlingTime: Int) {
+        guessIronDataRepository.changeSettlingTime(settlingTime)
+    }
+
     suspend fun changeDisplayBorder(displayBorderTop: Int, displayBorderBottom: Int) {
 
         val newDisplayBorder =
@@ -176,6 +185,10 @@ class GuessIronViewModel(
 
     suspend fun disableDisclaimer() {
         guessIronDataRepository.disableDisclaimer()
+    }
+
+    suspend fun disableEndlessAutomaticInfo() {
+        guessIronDataRepository.disableEndlessAutomaticInfo()
     }
 
     suspend fun disableEndlessMeasureHowTo() {
@@ -216,9 +229,7 @@ class GuessIronViewModel(
 
         _uiState.update { currentState ->
 
-            val scalaOrientation = scalaDirectionByRotation(currentState, displayRotation)
-
-            var y = when (scalaOrientation) {
+            var y = when (scalaDirectionByRotation(currentState, displayRotation)) {
                 ScalaDirection.Top -> currentState.measuredPixel + measuredPixelOffset
                 ScalaDirection.Bottom -> currentState.measuredPixel - measuredPixelOffset
                 ScalaDirection.Center -> if (startY < displayCenter)
@@ -278,9 +289,7 @@ class GuessIronViewModel(
 
         _uiState.update { currentState ->
 
-            val scalaOrientation = scalaDirectionByRotation(currentState, displayRotation)
-
-            var measuredPixelOnScala = when (scalaOrientation) {
+            var measuredPixelOnScala = when (scalaDirectionByRotation(currentState, displayRotation)) {
                 ScalaDirection.Top -> measuredPixel
                 ScalaDirection.Bottom -> displayPixel - measuredPixel
                 ScalaDirection.Center -> (displayCenter - measuredPixel) * 2
@@ -326,6 +335,18 @@ class GuessIronViewModel(
                 sizeInDp = sizeinDp,
                 sizeInMM = calculateMMFromPixel(sizeinDp.toFloat(), offset)
             )
+        }
+    }
+
+    fun autoIncEndlessStepValue(){
+        viewModelScope.launch {
+            _uiState.update { currentState ->
+
+                currentState.copy(
+                    endlessValue = currentState.sizeInMM + currentState.endlessValue,
+                    scalaOffsetAnimation = tween(durationMillis = 750, easing = LinearOutSlowInEasing)
+                )
+            }
         }
     }
 

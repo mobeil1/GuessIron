@@ -104,5 +104,18 @@
 
   <string name="HowToMeasureEndless">Para medir objetos de cualquier longitud, extienda la escala después de cada segmento.</string>
   <string name="DoNotShowAgain">No volver a mostrar</string>
-  
+
+  <string name="AutomaticSetting">Automático</string>
+  <string name="Low">Bajo</string>
+  <string name="Middle">medio</string>
+  <string name="High">Alta</string>
+  <string name="Seconds">Segundo(s)</string>
+  <string name="EndlessAutomaticInfo">Al medir objetos largos, GuessIron puede reconocer cuándo se mueve el móvil y desplazar automáticamente la escala</string>
+  <string name="Sensitivity">Sensibilidad</string>
+  <string name="SensitivityInfo">La sensibilidad indica la rapidez con la que debe moverse el móvil para activar la función automática.</string>
+  <string name="SettlingTime">Tiempo de asentamiento</string>
+  <string name="SettlingTimeInfo">El tiempo de asentamiento indica cuánto tiempo debe mantenerse quieto el móvil para que la escala se desplace después de un movimiento.</string>
+  <string name="EndlessAutomaticInfoTurnOff">Para que el sistema automático no interfiera en el funcionamiento de GuessIron, se desconecta cuando ya no es necesario.</string>
+
+
 </resources>
