@@ -1,6 +1,8 @@
 Verwandle dein Handy in ein Lineal
 
 * Umschaltbare Skalenrichtung (oben, unten oder Mitte)
+* Messe einragende Gegenstände
+* Messe beliebig lange Objekte
 * Kalibrierung mit einem Lineal, einer Bankkarte oder einem anderen beliebigen Gegenstand
 * Speichere Messwerte
 * Stelle Messwerte wieder her

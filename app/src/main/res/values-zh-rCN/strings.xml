@@ -40,4 +40,28 @@
     <string name="Item">物品</string>
     <string name="Factor">因子</string>
     <string name="NoMeasuredValues">没有保存的测量值</string>
+
+    <string name="ScreenMargin">屏幕边距</string>
+    <string name="Margin">边缘</string>
+    <string name="MarginConfigure">配置页边距</string>
+    <string name="ScreenMarginTop">屏幕边距顶部</string>
+    <string name="ScreenMarginBottom">屏幕边距底部</string>
+    <string name="ExplainMeasureToEdge">配置从屏幕边缘到刻度的余量，以测量侵入物体，例如墙上的钉子</string>
+    <string name="ExplainConfigMargins">配置屏幕边距，以测量入侵对象</string>
+    <string name="ExplainMeasureToEdgeAndroidVersionNotSupported">您的安卓版本只支持在纵向模式下测量入侵对象</string>
+    <string name="MeasuredValueToLong">测量值对当前刻度而言过大</string>
+    <string name="HowToMeasureEndless">要测量任意长度的物体，可在每段刻度后延长刻度</string>
+    <string name="DoNotShowAgain">不再出现</string>
+    <string name="AutomaticSetting">自动</string>
+    <string name="Low">低</string>
+    <string name="Middle">中层</string>
+    <string name="High">高</string>
+    <string name="Seconds">秒钟</string>
+    <string name="EndlessAutomaticInfo">在测量长物体时，GuessIron 可以识别手机的移动并自动移动刻度。</string>
+    <string name="Sensitivity">敏感性</string>
+    <string name="SensitivityInfo">灵敏度表示手机必须移动多快才能触发自动功能</string>
+    <string name="SettlingTime">安顿时间</string>
+    <string name="SettlingTimeInfo">沉淀时间表示手机移动后必须静止多长时间才能移动刻度。</string>
+    <string name="EndlessAutomaticInfoTurnOff">为了不影响 GuessIron 的运行，自动系统会在不再需要时自动关闭。</string>
+
 </resources>

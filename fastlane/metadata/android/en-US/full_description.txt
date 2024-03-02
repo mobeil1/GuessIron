@@ -1,6 +1,8 @@
 Measure things with your mobile phone
 
 * Switchable scale direction (top, bottom or center)
+* Measure protruding objects
+* Measure objects of any length
 * Calibrate the scale with a ruler, card (e.g. credit card) or any other object
 * Store the readings
 * Restore measured values
