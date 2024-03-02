@@ -2,7 +2,7 @@
 
 Use your phone as a ruler
 
-<img src="https://github.com/mobeil1/GuessIron/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="200" >
+<img src="https://github.com/mobeil1/GuessIron/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="200" alt="GuessIron screenshot">
 
 ## Download
 
