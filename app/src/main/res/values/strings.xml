@@ -48,7 +48,7 @@
     <string name="ScreenMarginTop">Screen margin top</string>
     <string name="ScreenMarginBottom">Screen margin bottom</string>
     <string name="ExplainMeasureToEdge">Configure the margin from the edge of the screen to the scale to measure intruding objects, for exampole a nail in the wall</string>
-    <string name="ExplainConfigMargins">Configure thr screen margins to measure intruding objects</string>
+    <string name="ExplainConfigMargins">Configure the screen margins to measure intruding objects</string>
     <string name="ExplainMeasureToEdgeAndroidVersionNotSupported">Your android version only support measuring intruding objects in portrait-modus</string>
     <string name="MeasuredValueToLong">The measured value is too large for the current scale!</string>
     <string name="HowToMeasureEndless">To measure objects of any length, extend the scale after each segment.</string>
