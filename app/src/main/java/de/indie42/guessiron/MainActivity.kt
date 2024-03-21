@@ -26,7 +26,7 @@ val Context.guessIronDataStore : DataStore<GuessIronData> by dataStore(fileName 
 private lateinit var viewModel: GuessIronViewModel
 
 enum class GuessIronRoutes ( val path: String) {
-    Main("main"), Measured("measured"), MeasureToEdgeSetting("MeasureToEdgeCalibration"), MeasureToEdgeCalibration("MeasureToEdgeCalibration/{direction}/{startOffset}"), CalibrationOverview("calibration"), CalibrationMode("calibration/{mode}"), AutomaticSetting("automaticSetting"), Disclaimer("disclaimer")/*, CameraMeasure("CameraMeasure")*/
+    Main("main"), Measured("measured"), MeasureToEdgeSetting("MeasureToEdgeCalibration"), MeasureToEdgeCalibration("MeasureToEdgeCalibration/{direction}/{startOffset}"), CalibrationOverview("calibration"), CalibrationMode("calibration/{mode}"), AutomaticSetting("automaticSetting"), UnitsystemConfiguration("unitSystemSetting"), Disclaimer("disclaimer")/*, CameraMeasure("CameraMeasure")*/
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -72,12 +72,14 @@ class MainActivity : ComponentActivity() {
                             onConfigEndlessAutomatic = {
                                 navController.navigateSingleTopTo(GuessIronRoutes.AutomaticSetting.path)
                             },
+                            onConfigUnitsystem = {
+                                navController.navigateSingleTopTo(GuessIronRoutes.UnitsystemConfiguration.path)
+                            },
                             viewModel = viewModel)
                     }
                     composable(route = GuessIronRoutes.Measured.path) {
                         MeasuredValuesScreen(
-                           viewModel = viewModel,
-                            onBack = { navController.popBackStack() }
+                           viewModel = viewModel, onBack = { navController.popBackStack() }
                         )
                     }
 //                    composable(route = GuessIronRoutes.CameraMeasure.path) {
@@ -112,15 +114,20 @@ class MainActivity : ComponentActivity() {
                             onBack = { navController.popBackStack() }
                         )
                     }
+                    composable(route = GuessIronRoutes.UnitsystemConfiguration.path) {
+                        UnitsystemConfigurationScreen(
+                            viewModel = viewModel,
+                        ) { navController.popBackStack() }
+                    }
                     composable(
                         route = GuessIronRoutes.MeasureToEdgeCalibration.path,
                         arguments = listOf(
                             navArgument("direction") { type = NavType.IntType },
-                            navArgument("startOffset") { type = NavType.IntType }) ) {
+                            navArgument("startOffset") { type = NavType.FloatType }) ) {
                         backStackEntry ->
                         MeasureToEdgeCalibrationScreen(
                             offsetScalaDirection = backStackEntry.arguments?.getInt("direction") ?: 0,
-                            startOffset = backStackEntry.arguments?.getInt("startOffset") ?: 0,
+                            startOffset = backStackEntry.arguments?.getFloat("startOffset", 0F) ?: 0F,
                             viewModel = viewModel,
                             onBack = { navController.popBackStack() }
                         )

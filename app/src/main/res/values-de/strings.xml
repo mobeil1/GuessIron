@@ -67,4 +67,8 @@
     <string name="SensitivityInfo">Die Empfindlichkeit gibt an, wie schnell das Handy bewegt werden muss, um die Automatik auszulösen.</string>
     <string name="SettlingTime">Beruhigungszeit</string>
     <string name="SettlingTimeInfo">Die Beruhigungszeit gibt an, wie lange das Handy ruhig gehalten werden muss, um die Skala nach einer Bewegung zu verschieben.</string>
+
+    <string name="Unitsystem">Maßeinheit</string>
+    <string name="Metric">Millimeter</string>
+    <string name="Imperial">Inch</string>
 </resources>

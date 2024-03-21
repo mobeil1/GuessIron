@@ -53,9 +53,53 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
 @Composable
+private fun ConfigOffset(
+    edgeDistance: Float,
+    unit: String,
+    unitFormat: String,
+    onBack: () -> Unit,
+    scalaDirection: ScalaDirection,
+    viewModel: GuessIronViewModel,
+    guessIronDataState: GuessIronDataState
+) {
+    val scope = rememberCoroutineScope()
+
+    Text(
+        modifier = Modifier.padding(8.dp),
+        text = AnnotatedString(text = stringResource(id = R.string.Margin) + ": " + "${String.format(unitFormat, edgeDistance)} $unit"),
+                style = MaterialTheme.typography.bodyLarge
+    )
+
+    Button(modifier = Modifier.padding(6.dp), onClick = {
+        scope.launch {
+            if (scalaDirection == ScalaDirection.Top)
+                viewModel.changeDisplayBorder(
+                    edgeDistance,
+                    guessIronDataState.displayBorder.bottom
+                )
+            else if (scalaDirection == ScalaDirection.Bottom)
+                viewModel.changeDisplayBorder(
+                    guessIronDataState.displayBorder.top,
+                    edgeDistance
+                )
+        }
+        onBack()
+    }
+    ) {
+        Text(text = AnnotatedString(text = stringResource(id = R.string.Ok)))
+    }
+    OutlinedButton(
+        modifier = Modifier.padding(6.dp),
+        onClick = onBack
+    ) {
+        Text(text = AnnotatedString(text = stringResource(id = R.string.Cancel)))
+    }
+}
+
+@Composable
 fun MeasureToEdgeCalibrationScreen(
     offsetScalaDirection: Int = 0,
-    startOffset: Int = 0,
+    startOffset: Float = 0F,
     viewModel: GuessIronViewModel,
     onBack: () -> Unit
 ) {
@@ -67,14 +111,14 @@ fun MeasureToEdgeCalibrationScreen(
 
     var edgePixelOffset by rememberSaveable {
         mutableFloatStateOf(
-            viewModel.calculatePixelFromMM(
+            viewModel.convertDistanceToPixel(
                 startOffset
             ) * -1
         )
     }
 
-    var edgeMMOffset by remember {
-        mutableIntStateOf(startOffset)
+    var edgeDistance by remember {
+        mutableFloatStateOf(startOffset)
     }
 
 
@@ -115,7 +159,7 @@ fun MeasureToEdgeCalibrationScreen(
                         if (edgePixelOffset > 0)
                             edgePixelOffset = 0F
 
-                        edgeMMOffset = viewModel.calculateMMFromPixel(edgePixelOffset, 0)
+                        edgeDistance = viewModel.convertPixelToDistance(edgePixelOffset, 0F)
 
 
                     }
@@ -126,13 +170,15 @@ fun MeasureToEdgeCalibrationScreen(
             scalaDirection,
             ScalaPosition.Left,
             scalaFactor = guessIronUiState.scalaFactor,
-            scalaStartMM = edgeMMOffset
+            unitSystem = guessIronUiState.unitSystem,
+            scalaStartDistance = edgeDistance
         )
         ScalaBar(
             scalaDirection,
             ScalaPosition.Right,
             scalaFactor = guessIronUiState.scalaFactor,
-            scalaStartMM = edgeMMOffset
+            unitSystem = guessIronUiState.unitSystem,
+            scalaStartDistance = edgeDistance
         )
         }
         Column(
@@ -153,7 +199,9 @@ fun MeasureToEdgeCalibrationScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         ConfigOffset(
-                            edgeMMOffset,
+                            edgeDistance,
+                            guessIronUiState.unitSystem.getUnit(),
+                            guessIronUiState.unitSystem.getFormat(),
                             onBack,
                             scalaDirection,
                             viewModel,
@@ -165,7 +213,9 @@ fun MeasureToEdgeCalibrationScreen(
                 DragTheScaleHowToImage(scalaDirection)
 
                 ConfigOffset(
-                    edgeMMOffset,
+                    edgeDistance,
+                    guessIronUiState.unitSystem.getUnit(),
+                    guessIronUiState.unitSystem.getFormat(),
                     onBack,
                     scalaDirection,
                     viewModel,
@@ -175,48 +225,6 @@ fun MeasureToEdgeCalibrationScreen(
 
 
         }
-    }
-}
-
-@Composable
-private fun ConfigOffset(
-    edgeMMOffset: Int,
-    onBack: () -> Unit,
-    scalaDirection: ScalaDirection,
-    viewModel: GuessIronViewModel,
-    guessIronDataState: GuessIronDataState
-) {
-    val scope = rememberCoroutineScope()
-
-    Text(
-        modifier = Modifier.padding(8.dp),
-        text = AnnotatedString(text = stringResource(id = R.string.Margin) + ": $edgeMMOffset mm"),
-        style = MaterialTheme.typography.bodyLarge
-    )
-
-    Button(modifier = Modifier.padding(6.dp), onClick = {
-        scope.launch {
-            if (scalaDirection == ScalaDirection.Top)
-                viewModel.changeDisplayBorder(
-                    edgeMMOffset,
-                    guessIronDataState.displayBorder.bottom
-                )
-            else if (scalaDirection == ScalaDirection.Bottom)
-                viewModel.changeDisplayBorder(
-                    guessIronDataState.displayBorder.top,
-                    edgeMMOffset
-                )
-        }
-        onBack()
-    }
-    ) {
-        Text(text = AnnotatedString(text = stringResource(id = R.string.Ok)))
-    }
-    OutlinedButton(
-        modifier = Modifier.padding(6.dp),
-        onClick = onBack
-    ) {
-        Text(text = AnnotatedString(text = stringResource(id = R.string.Cancel)))
     }
 }
 
@@ -294,7 +302,7 @@ fun MeasureToEdgeCalibrationHelp(scalaDirection: ScalaDirection = ScalaDirection
                 direction = scalaDirection,
                 scalaPosition = if (scalaDirection == ScalaDirection.Bottom) ScalaPosition.Right else ScalaPosition.Left,
                 scalaFactor = 1F,
-                scalaStartMM = scale.toInt(),
+                scalaStartDistance = scale,
                 supportLandscapeMode = false
             )
         }

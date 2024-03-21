@@ -6,6 +6,7 @@ import de.indie42.guessiron.DisplayBorder
 import de.indie42.guessiron.GuessIronData
 import de.indie42.guessiron.MeasuredValue
 import de.indie42.guessiron.ScalaDirection
+import de.indie42.guessiron.UnitSystem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import java.io.IOException
@@ -117,6 +118,12 @@ class GuessIronDataRepository(private val guessIronDataDataStore: DataStore<Gues
         guessIronDataDataStore.updateData { currentPreferences ->
             val indexToDelete = currentPreferences.measuredValuesList.indexOf(measuredValue)
             currentPreferences.toBuilder().removeMeasuredValues(indexToDelete).build()
+        }
+    }
+
+    suspend fun changeUnitsystem(unitSystem: UnitSystem, newDisplayBorder: DisplayBorder) {
+        guessIronDataDataStore.updateData { currentPreferences ->
+            currentPreferences.toBuilder().setUnitSystem(unitSystem).setDisplayBorder(newDisplayBorder).build()
         }
     }
 }

@@ -118,5 +118,8 @@
   <string name="SettlingTimeInfo">Le temps de stabilisation indique la durée pendant laquelle le téléphone portable doit être maintenu immobile pour que l\'échelle se déplace après un mouvement.</string>
   <string name="EndlessAutomaticInfoTurnOff">Afin que le système automatique n\'interfère pas avec le fonctionnement de GuessIron, il s\'éteint lorsqu\'il n\'est plus nécessaire.</string>
 
+  <string name="Unitsystem">Unité</string>
+  <string name="Metric">Millimètre</string>
+  <string name="Imperial">Inch</string>
 
 </resources>

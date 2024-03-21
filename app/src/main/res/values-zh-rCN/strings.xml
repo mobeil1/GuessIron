@@ -64,4 +64,8 @@
     <string name="SettlingTimeInfo">沉淀时间表示手机移动后必须静止多长时间才能移动刻度。</string>
     <string name="EndlessAutomaticInfoTurnOff">为了不影响 GuessIron 的运行，自动系统会在不再需要时自动关闭。</string>
 
+    <string name="Unitsystem">单位系统</string>
+    <string name="Metric">毫米</string>
+    <string name="Imperial">英寸</string>
+
 </resources>

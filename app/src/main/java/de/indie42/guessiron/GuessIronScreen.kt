@@ -8,7 +8,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateValue
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
@@ -37,13 +37,16 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoMode
 import androidx.compose.material.icons.filled.Dock
+import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Save
@@ -114,9 +117,9 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
-private fun getScalaOffset(guessIronState: GuessIronUiState): Int {
+private fun getScalaOffset(guessIronState: GuessIronUiState): Float {
 
-    var scalaOffset = if (guessIronState.scalaOffsetActive) guessIronState.scalaOffset else 0
+    var scalaOffset = if (guessIronState.scalaOffsetActive) guessIronState.scalaOffset else 0F
 
     if (guessIronState.endlessModeActive)
         scalaOffset += guessIronState.endlessValue
@@ -133,6 +136,7 @@ fun GuessIronScreen(
     onConfigDisplayBorder: () -> Unit,
     onConfigEndlessAutomatic: () -> Unit,
     viewModel: GuessIronViewModel = viewModel(),
+    onConfigUnitsystem: () -> Unit,
 ) {
 
     val guessIronState by viewModel.uiState.collectAsState()
@@ -185,7 +189,7 @@ fun GuessIronScreen(
 
     var sizeInDp by remember { mutableStateOf(IntSize.Zero) }
 
-    val scaleOffsetTotal: Int by animateIntAsState(getScalaOffset(guessIronState), label = "a", animationSpec = guessIronState.scalaOffsetAnimation)
+    val scaleOffsetTotal: Float by animateFloatAsState(getScalaOffset(guessIronState), label = "a", animationSpec = guessIronState.scalaOffsetAnimation)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -201,7 +205,7 @@ fun GuessIronScreen(
                     .onSizeChanged {
                         sizeInDp = it
 
-                        viewModel.setSizeInDp(if (isLandsacpe) it.width else it.height)
+                        viewModel.setSizeInPixel(if (isLandsacpe) it.width else it.height)
 
                     }
                     .pointerInput(Unit) {
@@ -261,19 +265,21 @@ fun GuessIronScreen(
                     direction = guessIronState.scalaDirection,
                     scalaPosition = ScalaPosition.Left,
                     measureOffset = Offset(0F, guessIronState.measuredPixel),
-                    onMeasuedMMToBig = {
+                    onDistanceToBig = {
                         if (!showSaveDialog && !showMeasureToEdgeNotSupported)
                             showMeasuredValueToBig = true
                     },
                     scalaFactor = guessIronState.scalaFactor,
-                    scalaStartMM = scaleOffsetTotal
+                    unitSystem = guessIronState.unitSystem,
+                    scalaStartDistance = scaleOffsetTotal
                 )
                 ScalaBar(
                     direction = guessIronState.scalaDirection,
                     scalaPosition = ScalaPosition.Right,
                     measureOffset = Offset(0F, guessIronState.measuredPixel),
                     scalaFactor = guessIronState.scalaFactor,
-                    scalaStartMM = scaleOffsetTotal
+                    unitSystem = guessIronState.unitSystem,
+                    scalaStartDistance = scaleOffsetTotal
                 )
             }
             Column(
@@ -315,7 +321,7 @@ fun GuessIronScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ){
-                            MeasureEnlessMenu(guessIronState, acc, scope, viewModel, guessIronState.sizeInMM, isLandsacpe = true, onShowInfo = {
+                            MeasureEndlessMenu(guessIronState, acc, scope, viewModel, guessIronState.sizeInDistance, isLandsacpe = true, onShowInfo = {
                                 showEndlessAutomaticInfo = true
                             })
                         }
@@ -343,7 +349,7 @@ fun GuessIronScreen(
                             acc.deactivateAutomatic()
                             showMoreMenu = true }
                     )
-                    MeasureEnlessMenu(guessIronState, acc, scope, viewModel, guessIronState.sizeInMM, isLandsacpe = false, onShowInfo = {
+                    MeasureEndlessMenu(guessIronState, acc, scope, viewModel, guessIronState.sizeInDistance, isLandsacpe = false, onShowInfo = {
                         showEndlessAutomaticInfo = true
                     })
                 }
@@ -351,9 +357,9 @@ fun GuessIronScreen(
         }
 
         if (showHowToEndless) {
-            HowToEndless(guessIronState.sizeInMM, onDismiss = { showHowToEndless = false }, onDisableHowTo = {
+            HowToEndless(guessIronState.sizeInDistance, onDismiss = { showHowToEndless = false }, onDisableHowTo = {
                 scope.launch { viewModel.disableEndlessMeasureHowTo() }
-            }, isLandsacpe = isLandsacpe)
+            }, unit = guessIronState.unitSystem.getUnit(), isLandsacpe = isLandsacpe)
         }
 
         if (showEndlessAutomaticInfo) {
@@ -385,7 +391,11 @@ fun GuessIronScreen(
                     showMoreMenu = false
                     onConfigEndlessAutomatic()
                 }
-            )
+
+            ) {
+                showMoreMenu = false
+                onConfigUnitsystem()
+            }
         }
 
         SnackbarMeasured(snackbarHostState, onClickShowMeasured)
@@ -511,15 +521,16 @@ fun GuessIronScreen(
             )
 
             SaveDialog(
-                measuredValue = savedMeasuredDistance,
-                measuredUnit = guessIronState.measuredUnit,
+                measuredValue = String.format( guessIronState.unitSystem.getFormat(), savedMeasuredDistance),
+                measuredUnit = guessIronState.unitSystem.getUnit(),
                 defaultName = "",
                 onDismissRequest = { showSaveDialog = false }) {
 
                 val newMeasuredItem =
                     MeasuredValue.newBuilder()
                         .setTimestamp(savedTimestamp)
-                        .setMeasured(savedMeasuredDistance)
+                        .setValue(savedMeasuredDistance)
+                        .setUnit(guessIronState.unitSystem.getUnit())
                         .setName(it)
                         .setMeasureType( if (guessIronState.endlessValue > 0 ) MeasuredValue.MeasureType.Endless else MeasuredValue.MeasureType.Single)
 
@@ -549,11 +560,11 @@ private fun MainMenu(
 
         if (guessIronState.scalaDirection == ScalaDirection.Center) {
             val centerValue = guessIronState.measuredDistance / 2
-            Text(text = AnnotatedString(text = "$centerValue | ${guessIronState.measuredDistance} ${guessIronState.measuredUnit}"))
+            Text(text = AnnotatedString(text = "${String.format(guessIronState.unitSystem.getFormat(), centerValue)} | ${String.format(guessIronState.unitSystem.getFormat(), guessIronState.measuredDistance)} ${guessIronState.unitSystem.getUnit()}"))
         } else
             Text(
                 text = AnnotatedString(
-                    text = "${getMeasuredDistance(guessIronState)} ${guessIronState.measuredUnit}"
+                    text = "${String.format(guessIronState.unitSystem.getFormat(), getMeasuredDistance(guessIronState))} ${guessIronState.unitSystem.getUnit()}"
                 )
             )
     }
@@ -568,7 +579,7 @@ private fun MainMenu(
         },
         onClickAddScalaOffset = {
 
-            if (guessIronState.scalaDirection != ScalaDirection.Center && !guessIronState.scalaOffsetActive && guessIronState.scalaOffset == 0) {
+            if (guessIronState.scalaDirection != ScalaDirection.Center && !guessIronState.scalaOffsetActive && guessIronState.scalaOffset == 0F) {
                 showConfigureDisplayBorder()
             } else {
                 acc.deactivateAutomatic()
@@ -598,12 +609,12 @@ private fun MainMenu(
 }
 
 @Composable
-private fun ColumnScope.MeasureEnlessMenu(
+private fun ColumnScope.MeasureEndlessMenu(
     guessIronState: GuessIronUiState,
     acc: EndlessAutomaticState,
     scope: CoroutineScope,
     viewModel: GuessIronViewModel,
-    heightInMM: Int,
+    heightDistance: Float,
     isLandsacpe: Boolean,
     onShowInfo: () -> Unit
 ) {
@@ -636,7 +647,7 @@ private fun ColumnScope.MeasureEnlessMenu(
                         ),
                         onClick = {
                             scope.launch {
-                                viewModel.setMeasuredEndlessStepValue(heightInMM + guessIronState.endlessValue)
+                                viewModel.setMeasuredEndlessStepValue(heightDistance + guessIronState.endlessValue)
                             }
                         },
                         icon = {
@@ -645,7 +656,7 @@ private fun ColumnScope.MeasureEnlessMenu(
                                 "Extended floating action button."
                             )
                         },
-                        text = { Text(text = "$heightInMM mm") },
+                        text = { Text(text = "${String.format(guessIronState.unitSystem.getFormat(), heightDistance)} ${guessIronState.unitSystem.getUnit()}") },
                     )
                 }
                 Row(
@@ -673,15 +684,15 @@ private fun ColumnScope.MeasureEnlessMenu(
                     IconButton(
                         modifier = Modifier.padding(8.dp),
                         onClick = {
-                            viewModel.setMeasuredEndlessStepValue(0)
-                            viewModel.setMeasuredValue(0)
+                            viewModel.setMeasuredEndlessStepValue(0F)
+                            viewModel.setMeasuredValue(0F, "")
                                   },
                     ) {
                         Icon(Icons.Filled.RestartAlt, "Floating action button.")
                     }
                     IconButton(
                         modifier = Modifier.padding(end = 8.dp),
-                        onClick = { viewModel.setMeasuredEndlessStepValue(guessIronState.endlessValue - heightInMM) },
+                        onClick = { viewModel.setMeasuredEndlessStepValue(guessIronState.endlessValue - heightDistance) },
                     ) {
                         Icon(Icons.Filled.Remove, "Floating action button.")
                     }
@@ -695,7 +706,7 @@ private fun ColumnScope.MeasureEnlessMenu(
 @Preview(showBackground = true)
 @Composable
 fun MoreMenuPreview() {
-    HowToEndless(heightInMM = 456, onDismiss = {}, onDisableHowTo = {}, isLandsacpe = true)
+    HowToEndless(scaleLength = 456F, onDismiss = {}, onDisableHowTo = {}, unit = "NN", isLandsacpe = true)
 }
 
 @Composable
@@ -749,7 +760,7 @@ fun HowToEndlessAutomatic(onDismiss: () -> Unit, onDisableHowTo: () -> Unit, isL
 }
 
 @Composable
-fun HowToEndless(heightInMM: Int, onDismiss: () -> Unit, onDisableHowTo: () -> Unit, isLandsacpe: Boolean) {
+fun HowToEndless(scaleLength: Float, onDismiss: () -> Unit, onDisableHowTo: () -> Unit, unit: String, isLandsacpe: Boolean) {
 
     val (checkedState, onStateChange) = remember { mutableStateOf(false) }
 
@@ -767,7 +778,7 @@ fun HowToEndless(heightInMM: Int, onDismiss: () -> Unit, onDisableHowTo: () -> U
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ){
-                        MeasureEndlessAnimation(heightInMM = heightInMM)
+                        MeasureEndlessAnimation(scaleLength = scaleLength.toInt(), unit = unit)
                         Column(
                             modifier = Modifier,
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -783,7 +794,7 @@ fun HowToEndless(heightInMM: Int, onDismiss: () -> Unit, onDisableHowTo: () -> U
                     }
                 }
                 else{
-                    MeasureEndlessAnimation(heightInMM = heightInMM)
+                    MeasureEndlessAnimation(scaleLength = scaleLength.toInt(), unit = unit)
 
                     MeasureEndlessText(checkedState, onStateChange, onDisableHowTo, onDismiss)
                 }
@@ -903,8 +914,8 @@ fun MeasureEndlessAutomaticAnimation() {
 
                 }
                 .padding(16.dp)){
-                val offset = if (scale > 23.5) 24 else scale.toInt()
-                ScalaBar(direction = ScalaDirection.Bottom, scalaStartMM = offset, scalaFactor = 0.7F, forceLandscape = true)
+                val offset = if (scale > 23.5) 24F else scale
+                ScalaBar(direction = ScalaDirection.Bottom, scalaStartDistance = offset, scalaFactor = 0.7F, forceLandscape = true)
             }
         }
     }
@@ -961,7 +972,7 @@ private fun MeasureEndlessAutomaticText(
 }
 
 @Composable
-fun MeasureEndlessAnimation(heightInMM: Int) {
+fun MeasureEndlessAnimation(scaleLength: Int, unit: String) {
 
     val infiniteTransition = rememberInfiniteTransition(label = "l1")
 
@@ -996,11 +1007,11 @@ fun MeasureEndlessAnimation(heightInMM: Int) {
             if (iconStoppedPosition) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
 
         val repeatText = if (iconPosition > 28.dp && iconPosition < 32.dp)
-            (heightInMM*1).toString()+" mm"
+            (scaleLength*1).toString()+" "+unit
         else if (iconPosition > 58.dp && iconPosition < 62.dp)
-            (heightInMM*2).toString()+" mm"
+            (scaleLength*2).toString()+" "+unit
         else if (iconPosition > 88.dp && iconPosition < 92.dp)
-            (heightInMM*3).toString()+" mm"
+            (scaleLength*3).toString()+" "+unit
         else
             ""
 
@@ -1058,7 +1069,7 @@ fun MeasureEndlessAnimation(heightInMM: Int) {
                     "Extended floating action button."
                 )
             },
-            text = { Text( text = "$heightInMM mm", style = MaterialTheme.typography.bodySmall) },
+            text = { Text( text = "$scaleLength $unit", style = MaterialTheme.typography.bodySmall) },
         )
         }
     }
@@ -1072,7 +1083,8 @@ private fun MoreMenu(
     onClickShowMeasured: () -> Unit,
     onShowCalibration: () -> Unit,
     onShowScreenBorder: () -> Unit,
-    onShowConfigEndlessAutomatic: () -> Unit
+    onShowConfigEndlessAutomatic: () -> Unit,
+    onShowConfigUnitsystem: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
 
@@ -1082,7 +1094,7 @@ private fun MoreMenu(
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
 
                 Row {Text(text = stringResource(id = R.string.measured), color = MaterialTheme.colorScheme.onPrimaryContainer) }
                 MoreMenuItem(onClickable = onShowSaveDialog, icon = Icons.Filled.Save, text = stringResource(id = R.string.Save))
@@ -1092,6 +1104,7 @@ private fun MoreMenu(
                 MoreMenuItem(onClickable = onShowCalibration, icon = Icons.Filled.ZoomOutMap, text = stringResource(id = R.string.calibration))
                 MoreMenuItem(onClickable = onShowScreenBorder, icon = Icons.Filled.Dock, text = stringResource(id = R.string.ScreenMargin))
                 MoreMenuItem(onClickable = onShowConfigEndlessAutomatic, icon = Icons.Filled.AutoMode, text = stringResource(id = R.string.AutomaticSetting))
+                MoreMenuItem(onClickable = onShowConfigUnitsystem, icon = Icons.Filled.Equalizer, text = stringResource(id = R.string.Unitsystem))
             }
         }
     }

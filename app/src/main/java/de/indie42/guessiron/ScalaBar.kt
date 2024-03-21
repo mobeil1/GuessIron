@@ -18,6 +18,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import de.indie42.guessiron.scalecalculator.ScalaCalculator
+import de.indie42.guessiron.unitsystem.IUnitsystem
+import de.indie42.guessiron.unitsystem.UnitSystemBaseMetric
 
 enum class ScalaDirection ( val value: Int ) {
     Top(0), Bottom(1), Center(2)
@@ -34,10 +37,11 @@ fun ScalaBar(
     scalaPosition: ScalaPosition = ScalaPosition.Right,
     scalaColor: Color = MaterialTheme.colorScheme.onBackground,
     measureOffset: Offset = Offset(0f, 0f),
-    measuredMM: Int = 0,
-    onMeasuedMMToBig: () -> Unit = {},
-    scalaStartMM: Int = 0,
+    measuredDistance: Float = 0F,
+    onDistanceToBig: () -> Unit = {},
+    scalaStartDistance: Float = 0F,
     scalaFactor: Float = 1F,
+    unitSystem: IUnitsystem = UnitSystemBaseMetric(),
     supportLandscapeMode: Boolean = true,
     forceLandscape: Boolean = false
     ) {
@@ -57,17 +61,17 @@ fun ScalaBar(
             }
     }
 
-    val scalaCalculator = ScalaCalculator(rotationDirection, scalaPosition, scalaFactor, scalaStartMM, isLandsacpe)
+    val scalaCalculator = ScalaCalculator(rotationDirection, scalaPosition, scalaFactor, scalaStartDistance, unitSystem, isLandsacpe)
 
     var measuredOffset = measureOffset
-    if (measuredMM > 0)
-        measuredOffset = Offset( x = 0F, y = scalaCalculator.getMMinPixel(measuredMM))
+    if (measuredDistance > 0)
+        measuredOffset = Offset( x = 0F, y = scalaCalculator.getDistanceinPixel(measuredDistance))
 
     ScalaLines(
         measureOffset = measuredOffset,
         scalaColor = scalaColor,
         scalaCalculator = scalaCalculator,
-        onMeasuedMMToBig
+        onDistanceToBig
     )
 
     ScalaNumber(
@@ -77,12 +81,10 @@ fun ScalaBar(
 }
 
 @Composable
-fun ScalaLines(measureOffset: Offset, scalaColor: Color, scalaCalculator: ScalaCalculator, onMeasuedMMToBig: () -> Unit) {
+fun ScalaLines(measureOffset: Offset, scalaColor: Color, scalaCalculator: ScalaCalculator, onDistanceToBig: () -> Unit) {
 
     val measureColor = MaterialTheme.colorScheme.primary
     val measureOnColor = MaterialTheme.colorScheme.onPrimary
-
-    val dpmm = scalaCalculator.dpmm
 
     Canvas(modifier = Modifier.fillMaxSize()) {
 
@@ -92,10 +94,10 @@ fun ScalaLines(measureOffset: Offset, scalaColor: Color, scalaCalculator: ScalaC
 
         val scaleLengthInPixel = scalaCalculator.getScaleLengthInPixel(size)
 
-        val threshold = scalaCalculator.getMMinPixel(1)
+        val threshold = scalaCalculator.getDistanceinPixel(1F )
 
         if (scaleLengthInPixel + threshold < measureOffset.y)
-            onMeasuedMMToBig()
+            onDistanceToBig()
 
         if (scalaCalculator.scalaDirection == ScalaDirection.Center) {
             val centerMeasured = measureOffset.y / 2F
@@ -105,14 +107,14 @@ fun ScalaLines(measureOffset: Offset, scalaColor: Color, scalaCalculator: ScalaC
 
         // Messdaten anzeigen
         val measuredSizeLeft = if ( scalaCalculator.isLandsacpe )
-                Size( measureOffset.y, dpmm * 8)
+                Size( measureOffset.y, scalaCalculator.MAX_LINE)
             else
-                Size(dpmm * 8, measureOffset.y)
+                Size(scalaCalculator.MAX_LINE, measureOffset.y)
 
         val measuredSizeRight = if ( scalaCalculator.isLandsacpe )
-            Size(measureOffset.y, dpmm * 8 * -1)
+            Size(measureOffset.y, scalaCalculator.MAX_LINE * -1)
         else
-            Size(dpmm * 8 * -1, measureOffset.y)
+            Size(scalaCalculator.MAX_LINE * -1, measureOffset.y)
 
         if (scalaCalculator.scalaDirection == ScalaDirection.Bottom) {
 
@@ -175,7 +177,7 @@ fun ScalaLines(measureOffset: Offset, scalaColor: Color, scalaCalculator: ScalaC
 
         }
 
-        for (i in 0 until scalaCalculator.getHeightInMM(size)) {
+        for (i in 0 until scalaCalculator.getHeightLength(size)) {
 
             val newLineStart = scalaCalculator.getScalaLineOffsetStart(i, size)
 
@@ -219,7 +221,7 @@ fun ScalaNumber(scalaCalculator: ScalaCalculator, scalaColor: Color) {
 
     Canvas(modifier = Modifier.fillMaxSize()) {
 
-        for (i in 0 until scalaCalculator.getHeightInMM(size)) {
+        for (i in 0 until scalaCalculator.getHeightLength(size)) {
 
             val absolutePosition = scalaCalculator.getLinePosition(i, size)
 
@@ -240,7 +242,7 @@ fun ScalaNumber(scalaCalculator: ScalaCalculator, scalaColor: Color) {
                 if (absolutePosition == 0)
                     textOffsetFromLineEnd = 25F
 
-                var textX = scalaCalculator.dpmm * 8
+                var textX = scalaCalculator.MAX_LINE
                 if (scalaCalculator.scalaPosition == ScalaPosition.Right)
                     textX = size.width - textX - measuredText.size.width - transRotateOffset + (textOffsetFromLineEnd * -1)
                 else
@@ -252,7 +254,7 @@ fun ScalaNumber(scalaCalculator: ScalaCalculator, scalaColor: Color) {
 
                    textX = lineEndPoint.x - measuredText.size.width/2
 
-                   textY = scalaCalculator.getLineLength(i, size) * scalaCalculator.dpmm
+                   textY = scalaCalculator.getLineLength(i, size)
                    if (scalaCalculator.scalaPosition == ScalaPosition.Right) {
                        textY = size.height - textY - measuredText.size.height
                    } else {

@@ -37,7 +37,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -57,6 +56,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
+import java.text.DecimalFormatSymbols
 
 
 enum class ScalaCalibrationMode(val value: Int) {
@@ -80,7 +80,7 @@ fun ScalaCalibrationScreen(mode: Int = 0, viewModel: GuessIronViewModel, onBack:
 
     val guessIronUiState by viewModel.uiState.collectAsState()
 
-    var calibratingDistance by rememberSaveable { mutableIntStateOf(0) }
+    var calibratingDistance by rememberSaveable { mutableFloatStateOf(0F ) }
     var showHowToDialog by rememberSaveable { mutableStateOf(true) }
     var newScalaFactor by rememberSaveable { mutableFloatStateOf(guessIronUiState.scalaFactor) }
 
@@ -149,14 +149,16 @@ fun ScalaCalibrationScreen(mode: Int = 0, viewModel: GuessIronViewModel, onBack:
         ScalaBar(
             guessIronUiState.scalaDirection,
             ScalaPosition.Left,
-            measuredMM = calibratingDistance,
-            scalaFactor = newScalaFactor
+            measuredDistance = calibratingDistance,
+            scalaFactor = newScalaFactor,
+            unitSystem = guessIronUiState.unitSystem
         )
         ScalaBar(
             guessIronUiState.scalaDirection,
             ScalaPosition.Right,
-            measuredMM = calibratingDistance,
-            scalaFactor = newScalaFactor
+            measuredDistance = calibratingDistance,
+            scalaFactor = newScalaFactor,
+            unitSystem = guessIronUiState.unitSystem
         )
         }
         Column(
@@ -204,14 +206,15 @@ fun ScalaCalibrationScreen(mode: Int = 0, viewModel: GuessIronViewModel, onBack:
                     }
                     ScalaCalibrationMode.Card -> {
                         CalibrationModeCard(onOk = {
-                            calibratingDistance = 54
+                            calibratingDistance = if (guessIronUiState.unitSystem.getUnitsystem() == UnitSystem.IMPERIAL) 53.98F / 2.54F else 53.98F
                             showHowToDialog = false })
                     }
                     ScalaCalibrationMode.UserDef -> {
                         CalibrationModeUserDef(onOk = {
-                            calibratingDistance = it
+                            calibratingDistance = it * guessIronUiState.unitSystem.getDecimal()
                             showHowToDialog = false
-                        }, onBack)
+                        },
+                            guessIronUiState.unitSystem.getUnit(), onBack)
                     }
                     else -> onBack()
                 }
@@ -223,11 +226,12 @@ fun ScalaCalibrationScreen(mode: Int = 0, viewModel: GuessIronViewModel, onBack:
 
 @Composable
 private fun CalibrationModeUserDef(
-    onOk: (distamce: Int) -> Unit,
+    onOk: (distance: Float) -> Unit,
+    unit: String,
     onBack: () -> Unit
 ) {
     var showUserDefDialog by rememberSaveable { mutableStateOf(true) }
-    var calibratingDistance by rememberSaveable { mutableIntStateOf(0) }
+    var calibratingDistance by rememberSaveable { mutableFloatStateOf(0F ) }
 
     if (showUserDefDialog) {
         UserDefDialog(
@@ -235,7 +239,8 @@ private fun CalibrationModeUserDef(
             onConfirmation = {
                 calibratingDistance = it
                 showUserDefDialog = false
-            }
+            },
+            unit = unit
         )
     } else
         CalibrationInfoDialog(text = stringResource(id = R.string.InstructionsCalibrateWithDifferentItem),
@@ -258,7 +263,7 @@ private fun CalibrationModeRuler(
 
     CalibrationInfoDialog(
         text = stringResource(id = R.string.InstructionsCalibrateWithRuler),
-        measuredMM = 0,
+        measuredDistance = 0F,
         withCreditcard = false,
         onDismissRequest = onOk
     )
@@ -282,10 +287,13 @@ private fun CalibrationOkAndCancel(
 @Composable
 fun UserDefDialog(
     onDismissRequest: () -> Unit,
-    onConfirmation: (distance: Int) -> Unit,
+    onConfirmation: (distance: Float) -> Unit,
+    unit: String
 ) {
     var text by rememberSaveable { mutableStateOf("") }
     val focusInput = remember { FocusRequester() }
+
+    val decimalFormatSymbols = DecimalFormatSymbols(LocalConfiguration.current.locales.get(0))
 
     Dialog(onDismissRequest = { onDismissRequest() }) {
         // Draw a rectangle shape with rounded corners inside the dialog
@@ -313,14 +321,14 @@ fun UserDefDialog(
                             .padding(16.dp)
                             .focusRequester(focusInput),
                         onValueChange = {
-                            text = it
-                                .replace(".", "")
-                                .replace(",", "")
-                                .replace("-", "")
-                                .replace(" ", "")
+                            text = it.replace("-", "")
+                                      .replace(" ", "")
+                                .replace(decimalFormatSymbols.groupingSeparator.toString(), "")
+
+
                         },
                         label = { Text(stringResource(id = R.string.Distance)) },
-                        placeholder = { Text("mm") },
+                        placeholder = { Text(unit) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         trailingIcon = {
@@ -349,8 +357,9 @@ fun UserDefDialog(
                     }
                     TextButton(
                         onClick = {
-                            if (text != "")
-                                onConfirmation(text.toInt())
+                            val distance = try { text.replace(decimalFormatSymbols.decimalSeparator.toString(), ".").toFloat()} catch (e: NumberFormatException) { null }
+                            if (distance != null)
+                                onConfirmation(distance)
                         },
                         modifier = Modifier.padding(8.dp),
                     ) {
@@ -373,7 +382,7 @@ fun UserDefDialog(
 fun CalibrationInfoDialog(
     text: String = "",
     itemName: String = "",
-    measuredMM: Int = 15,
+    measuredDistance: Float = 15F,
     withCreditcard: Boolean = true,
     onDismissRequest: () -> Unit,
 ) {
@@ -425,7 +434,7 @@ fun CalibrationInfoDialog(
                         ) {
                             ScalaBar(
                                 scalaPosition = ScalaPosition.Left,
-                                measuredMM = measuredMM,
+                                measuredDistance = measuredDistance,
                                 scalaFactor = scale / 100
                             )
                         }

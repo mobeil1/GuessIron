@@ -40,7 +40,7 @@ import androidx.compose.ui.window.Dialog
 
 @Composable
 fun SaveDialog(
-    measuredValue: Int,
+    measuredValue: String,
     measuredUnit: String,
     defaultName: String = "10.11.23 13:12:00",
     onDismissRequest: () -> Unit,
@@ -124,7 +124,7 @@ fun SaveDialog(
 @Preview(showBackground = true)
 @Composable
 fun DialogPreview() {
-    //SaveDialog(measuredValue = 123, measuredUnit = "mm", onDismissRequest = {}, onConfirmation = {})
+    //SaveDialog(measuredValue = 123, measuredUnit = "NN", onDismissRequest = {}, onConfirmation = {})
 
     ElevatedCard(
         elevation = CardDefaults.cardElevation(

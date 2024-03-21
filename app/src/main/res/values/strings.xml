@@ -64,4 +64,7 @@
     <string name="SettlingTime">Settling time</string>
     <string name="SettlingTimeInfo">The settling time indicates how long the cell phone must be held still to shift the scale after a movement.</string>
     <string name="EndlessAutomaticInfoTurnOff">So that the automatic system does not interfere with the operation of GuessIron, it switches itself off when it is no longer needed</string>
+    <string name="Unitsystem">Unit</string>
+    <string name="Metric">Millimeter</string>
+    <string name="Imperial">Inch</string>
 </resources>

@@ -54,7 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun DisplayBorderScreen(
     viewModel: GuessIronViewModel = viewModel(),
-    onEdit: (ScalaDirection, Int) -> Unit,
+    onEdit: (ScalaDirection, Float) -> Unit,
     onBack: () -> Unit) {
 
 
@@ -114,10 +114,11 @@ fun DisplayBorderScreen(
 
 @Composable
 private fun ConfigurationSettings(
-    onEdit: (ScalaDirection, Int) -> Unit,
+    onEdit: (ScalaDirection, Float) -> Unit,
     viewModel: GuessIronViewModel
 ) {
     val guessIronData by viewModel.dataState.collectAsState()
+    val guessIronUi by viewModel.uiState.collectAsState()
 
     Text(
         modifier = Modifier.padding(4.dp),
@@ -135,7 +136,7 @@ private fun ConfigurationSettings(
                 contentDescription = stringResource(id = R.string.ScreenMarginTop),
             )
         },
-        supportingContent = { Text("${guessIronData.displayBorder.top} mm") },
+        supportingContent = { Text("${String.format(guessIronUi.unitSystem.getFormat(), guessIronData.displayBorder.top) } ${guessIronUi.unitSystem.getUnit()}") },
         trailingContent = {
             Icon(imageVector = Icons.Filled.Edit, contentDescription = stringResource(id = R.string.ScreenMarginTop))
         }
@@ -148,7 +149,7 @@ private fun ConfigurationSettings(
         leadingContent = {
             Icon(imageVector = Icons.Filled.Dock, contentDescription = stringResource(id = R.string.ScreenMarginBottom))
         },
-        supportingContent = { Text("${guessIronData.displayBorder.bottom} mm") },
+        supportingContent = { Text("${String.format(guessIronUi.unitSystem.getFormat(), guessIronData.displayBorder.bottom)} ${guessIronUi.unitSystem.getUnit()}") },
         trailingContent = {
             Icon(imageVector = Icons.Filled.Edit, contentDescription = stringResource(id = R.string.ScreenMarginBottom))
         }
@@ -222,8 +223,8 @@ fun MeasureToEdgeObject() {
                     ScalaDirection.Top,
                     ScalaPosition.Left,
                     scalaFactor = 1F,
-                    measuredMM = scale.toInt(),
-                    scalaStartMM = 8,
+                    measuredDistance = scale,
+                    scalaStartDistance = 8F,
                     supportLandscapeMode = false
                 )
             }

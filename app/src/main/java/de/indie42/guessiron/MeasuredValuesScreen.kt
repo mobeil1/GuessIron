@@ -59,7 +59,6 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MeasuredValuesScreen(
-    modifier: Modifier = Modifier,
     viewModel: GuessIronViewModel = viewModel(),
     onBack: () -> Unit,
 ) {
@@ -71,8 +70,6 @@ fun MeasuredValuesScreen(
     var showMenuDialog by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
-
-    val context = LocalContext.current
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
@@ -132,238 +129,211 @@ fun MeasuredValuesScreen(
         modifier = Modifier.fillMaxSize(),
     ) { innerPadding ->
 
-        if (measuredValues.measuredValues.isEmpty()){
-            Column ( modifier = Modifier.padding(innerPadding),
+        if (measuredValues.measuredValues.isEmpty()) {
+            Column(
+                modifier = Modifier.padding(innerPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center) {
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
                     color = MaterialTheme.colorScheme.outline,
-                    text = stringResource(id = R.string.NoMeasuredValues))
+                    text = stringResource(id = R.string.NoMeasuredValues)
+                )
             }
 
-        }
-        else {
-        LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Adaptive(150.dp),
-            verticalItemSpacing = 4.dp,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            content = {
-                itemsIndexed(measuredValues.measuredValues) { index, measuredValue ->
-                    ElevatedCard(
+        } else {
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Adaptive(150.dp),
+                verticalItemSpacing = 4.dp,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                content = {
+                    itemsIndexed(measuredValues.measuredValues) { index, measuredValue ->
 
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 6.dp
-                        ),
-                        modifier = Modifier.padding(8.dp),
-                        onClick = {
-                            selectedMeasuredValue = index
-                            showMenuDialog = true
-                        }
-                    ) {
-
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 8.dp, end = 8.dp)
-                        ) {
-
-                            val pattern = DateTimeFormatter.ofPattern(
-                                "yyyy-MM-dd HH:mm:ss",
-                                Locale.getDefault()
-                            )
-                            val localDateTime =
-                                LocalDateTime.parse(measuredValue.timestamp, pattern)
-                            val moment = DateUtils.getRelativeDateTimeString(
-                                context,
-                                localDateTime.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000,
-                                DateUtils.SECOND_IN_MILLIS,
-                                DateUtils.DAY_IN_MILLIS,
-                                DateUtils.FORMAT_SHOW_YEAR
-                            )
-                            if (measuredValue.name.isNotBlank()){
-                                Text(
-                                    text = measuredValue.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.padding(bottom = 8.dp, top = 8.dp),
-                                )
-                            }
-                            else{
-                                Text(
-                                    text = "<"+ stringResource(id = R.string.Empty_Placeholder) +">",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.outline,
-                                    modifier = Modifier.padding(bottom = 8.dp, top = 8.dp),
-                                )
-                            }
-                            Row(modifier = Modifier.fillMaxWidth()) {
-                                Column(
-                                    modifier = Modifier
-                                        .weight(1f),
-
-                                    verticalArrangement = Arrangement.Center,
-                                ) {
-                                    Text(
-                                        modifier = Modifier.padding(bottom = 4.dp, top = 8.dp),
-                                        text = measuredValue.measured.toString() + " mm",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    Text(
-                                        modifier = Modifier.padding(bottom = 4.dp),
-                                        text = moment.toString(),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.outline
-                                    )
-                                }
-
-                            }
-                        }
+                        MeasuredValueCard(measuredValue = measuredValue,
+                            modifier = Modifier.padding(8.dp),
+                            onCardClick = {
+                                selectedMeasuredValue = index
+                                showMenuDialog = true
+                            },
+                            onShowValue = {},
+                            onEditValue = {},
+                            onDeleteValue = {}
+                        )
                     }
-                }
-            },
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        )
-
-        if (showEditValueDialog) {
-            val measuredValue = measuredValues.measuredValues[selectedMeasuredValue]
-
-            SaveDialog(
-                measuredValue = measuredValue.measured,
-                measuredUnit = "mm",
-                defaultName = measuredValue.name,
-                onDismissRequest = { showEditValueDialog = false },
-                onConfirmation = {newName ->
-                    scope.launch {
-                        viewModel.updateMeasuredValue(measuredValue, newName)
-                    }
-                    showEditValueDialog = false
-                }
+                },
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
             )
 
-        }
+            if (showEditValueDialog) {
+                val measuredValue = measuredValues.measuredValues[selectedMeasuredValue]
 
-        if (showMenuDialog) {
-            val measuredValue = measuredValues.measuredValues[selectedMeasuredValue]
+                val measuredDistanceFloat = if (measuredValue.measured == 0) measuredValue.value else measuredValue.measured
 
-            Dialog(onDismissRequest = { showMenuDialog = false }) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                ) {
+                val measuredDistance = if (measuredValue.unit == "in") String.format("%.1f", measuredDistanceFloat) else
+                    String().format("%.0f", measuredDistanceFloat)
 
-                    ElevatedCard(
-                        modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 6.dp
-                        ),
-
-                        ) {
-
-                        val pattern = DateTimeFormatter.ofPattern(
-                            "yyyy-MM-dd HH:mm:ss",
-                            Locale.getDefault()
-                        )
-                        val localDateTime =
-                            LocalDateTime.parse(measuredValue.timestamp, pattern)
-                        val moment = DateUtils.getRelativeDateTimeString(
-                            context,
-                            localDateTime.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000,
-                            DateUtils.SECOND_IN_MILLIS,
-                            DateUtils.DAY_IN_MILLIS,
-                            DateUtils.FORMAT_SHOW_YEAR
-                        )
-                        if (measuredValue.name.isNotBlank()) {
-                            Text(
-                                text = measuredValue.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(8.dp),
-                            )
-                        } else {
-                            Text(
-                                text = "<" + stringResource(id = R.string.Empty_Placeholder) + ">",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.outline,
-                                modifier = Modifier.padding(8.dp),
-                            )
+                SaveDialog(
+                    measuredValue = measuredDistance,
+                    measuredUnit = measuredValue.unit,
+                    defaultName = measuredValue.name,
+                    onDismissRequest = { showEditValueDialog = false },
+                    onConfirmation = { newName ->
+                        scope.launch {
+                            viewModel.updateMeasuredValue(measuredValue, newName)
                         }
+                        showEditValueDialog = false
+                    }
+                )
 
-                        Text(
-                            modifier = Modifier.padding(
-                                bottom = 4.dp,
-                                top = 8.dp,
-                                start = 8.dp
-                            ),
-                            text = measuredValue.measured.toString() + " mm",
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                        Text(
-                            modifier = Modifier.padding(bottom = 8.dp, start = 8.dp),
-                            text = moment.toString(),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                        Row(
+            }
+
+            if (showMenuDialog) {
+                val measuredValue = measuredValues.measuredValues[selectedMeasuredValue]
+
+                Dialog(onDismissRequest = { showMenuDialog = false }) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        MeasuredValueCard(measuredValue = measuredValue,
                             modifier = Modifier
-                                .padding(8.dp)
-                                .fillMaxWidth(),
-                            Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-
-                            if (measuredValue.measureType == MeasuredValue.MeasureType.Single){
-                                Button(
-                                    onClick = {
-                                        scope.launch {
-                                            viewModel.setMeasuredValue(measuredValue.measured)
-                                            showMenuDialog = false
-                                            onBack()
-                                        }
-                                    },
-                                ) {
-                                    Text(text = stringResource(id = R.string.Show))
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            onCardClick = {},
+                            showEditRow = true,
+                            onShowValue = {
+                                scope.launch {
+                                    viewModel.setMeasuredValue(if (measuredValue.measured == 0) measuredValue.value else measuredValue.measured.toFloat(), measuredValue.unit)
+                                    showMenuDialog = false
+                                    onBack()
+                                }
+                            },
+                            onEditValue = {
+                                showMenuDialog = false
+                                showEditValueDialog = true
+                            },
+                            onDeleteValue = {
+                                scope.launch {
+                                    viewModel.removeMeasuredValue(measuredValue)
+                                    showMenuDialog = false
                                 }
                             }
-                            else {
-                                Icon(imageVector = Icons.Filled.Repeat, contentDescription = "")
-                            }
-                            Row(horizontalArrangement = Arrangement.End) {
-                                IconButton(
-                                    onClick = {
-                                        showMenuDialog = false
-                                        showEditValueDialog = true
-                                    },
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Edit,
-                                        contentDescription = stringResource(
-                                            id = R.string.Edit
-                                        )
-                                    )
-                                }
-                                IconButton(
-                                    onClick = {
-                                        scope.launch {
-                                            viewModel.removeMeasuredValue(measuredValue)
-                                            showMenuDialog = false
-                                        }
-                                    },
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Delete,
-                                        contentDescription = stringResource(id = R.string.Delete)
-                                    )
-                                }
-                            }
-
-                        }
+                        )
                     }
                 }
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun MeasuredValueCard(
+    measuredValue: MeasuredValue,
+    modifier: Modifier,
+    onCardClick: () -> Unit,
+    showEditRow: Boolean = false,
+    onShowValue: () -> Unit,
+    onEditValue: () -> Unit,
+    onDeleteValue: () -> Unit
+) {
+
+    val context = LocalContext.current
+
+    val measuredUnit = if (measuredValue.unit == "") "mm" else measuredValue.unit
+
+    val measuredDistanceFloat = if (measuredValue.value == 0F) measuredValue.measured.toFloat() else measuredValue.value
+    val measuredDistance = if (measuredUnit == "in") String.format("%.1f", measuredDistanceFloat) else String.format("%.0f", measuredDistanceFloat)
+
+    ElevatedCard(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        onClick = onCardClick
+    ) {
+
+        val pattern = DateTimeFormatter.ofPattern(
+            "yyyy-MM-dd HH:mm:ss",
+            Locale.getDefault()
+        )
+        val localDateTime =
+            LocalDateTime.parse(measuredValue.timestamp, pattern)
+
+        val moment = DateUtils.getRelativeDateTimeString(
+            context,
+            localDateTime.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000,
+            DateUtils.SECOND_IN_MILLIS,
+            DateUtils.DAY_IN_MILLIS,
+            DateUtils.FORMAT_SHOW_YEAR
+        )
+        if (measuredValue.name.isNotBlank()) {
+            Text(
+                text = measuredValue.name,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(8.dp),
+            )
+        } else {
+            Text(
+                text = "<" + stringResource(id = R.string.Empty_Placeholder) + ">",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(8.dp),
+            )
+        }
+
+        Text(
+            modifier = Modifier.padding(
+                bottom = 4.dp,
+                top = 8.dp,
+                start = 8.dp
+            ),
+            text = "${measuredDistance} $measuredUnit",
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Text(
+            modifier = Modifier.padding(bottom = 8.dp, start = 8.dp),
+            text = moment.toString(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.outline
+        )
+        if (showEditRow) {
+
+            Row(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth(),
+                Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                if (measuredValue.measureType == MeasuredValue.MeasureType.Single) {
+                    Button(
+                        onClick = onShowValue,
+                    ) {
+                        Text(text = stringResource(id = R.string.Show))
+                    }
+                } else {
+                    Icon(imageVector = Icons.Filled.Repeat, contentDescription = "")
+                }
+                Row(horizontalArrangement = Arrangement.End) {
+                    IconButton(
+                        onClick = onEditValue,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = stringResource(id = R.string.Edit)
+                        )
+                    }
+                    IconButton(
+                        onClick = onDeleteValue,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = stringResource(id = R.string.Delete)
+                        )
+                    }
                 }
             }
         }
