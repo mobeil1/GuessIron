@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.datastore.core.DataStore
 import de.indie42.guessiron.DisplayBorder
 import de.indie42.guessiron.GuessIronData
+import de.indie42.guessiron.MeasureButtonFunction
 import de.indie42.guessiron.MeasuredValue
 import de.indie42.guessiron.ScalaDirection
 import de.indie42.guessiron.UnitSystem
@@ -29,6 +30,12 @@ class GuessIronDataRepository(private val guessIronDataDataStore: DataStore<Gues
     suspend fun disableDisclaimer() {
         guessIronDataDataStore.updateData { currentPreferences ->
             currentPreferences.toBuilder().setDisclaimerDisabled(true).build()
+        }
+    }
+
+    suspend fun changeVersion(version:Int) {
+        guessIronDataDataStore.updateData { currentPreferences ->
+            currentPreferences.toBuilder().setVersion(version).build()
         }
     }
 
@@ -80,6 +87,12 @@ class GuessIronDataRepository(private val guessIronDataDataStore: DataStore<Gues
         }
     }
 
+    suspend fun changeMeasureButtonFunction(changeMeasureButtonFunction: MeasureButtonFunction) {
+        guessIronDataDataStore.updateData { currentPreferences ->
+            currentPreferences.toBuilder().setMeasureButtonFunction(changeMeasureButtonFunction).build()
+        }
+    }
+
     suspend fun changeScalaOffsetActive(scalaOffsetActive: Boolean) {
         guessIronDataDataStore.updateData { currentPreferences ->
             currentPreferences.toBuilder().setScalaOffsetActive(scalaOffsetActive).build()
@@ -96,6 +109,22 @@ class GuessIronDataRepository(private val guessIronDataDataStore: DataStore<Gues
     suspend fun changeSortBy(sort: GuessIronData.SortOrder) {
         guessIronDataDataStore.updateData { currentPreferences ->
             currentPreferences.toBuilder().setSortOrder(sort).build()
+        }
+    }
+
+    suspend fun upgradeValues( toVersion: Int) {
+
+        guessIronDataDataStore.updateData { currentPreferences ->
+
+            val existingValues = currentPreferences.measuredValuesList.toList()
+
+            var builder = currentPreferences.toBuilder().clearMeasuredValues()
+
+            existingValues.forEach {
+                builder = builder.addMeasuredValues(it.toBuilder().setValue(it.measured.toFloat()).build())
+            }
+
+            builder.setVersion(toVersion).setDisplayBorder(DisplayBorder.newBuilder().setBottom(0F).setTop(0F).build()).setScalaOffsetActive(false).build()
         }
     }
 

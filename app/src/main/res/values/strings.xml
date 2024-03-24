@@ -67,4 +67,7 @@
     <string name="Unitsystem">Unit</string>
     <string name="Metric">Millimeter</string>
     <string name="Imperial">Inch</string>
+    <string name="FunctionMeasureButtton">Measured value button</string>
+    <string name="ResetToZero">Reset to zero</string>
+    <string name="FuctionMeasureButtonInfo">Configure how the measured value button should behave</string>
 </resources>

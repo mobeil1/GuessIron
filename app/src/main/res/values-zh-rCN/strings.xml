@@ -68,4 +68,8 @@
     <string name="Metric">毫米</string>
     <string name="Imperial">英寸</string>
 
+    <string name="FunctionMeasureButtton">测量值按钮</string>
+    <string name="ResetToZero">清零</string>
+    <string name="FuctionMeasureButtonInfo">配置测量值按钮的操作方式</string>
+
 </resources>

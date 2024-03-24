@@ -19,15 +19,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class GuessIronUiState(
+    val version: Int = 1,
     val disclaimerDisabled: Boolean = true,
     val endlessMeasureHowToDisabled: Boolean = true,
-    val scalaDirection: ScalaDirection,
+    val scalaDirection: ScalaDirection = ScalaDirection.Top,
     val scalaFactor: Float = 1F,
     val scalaOffset: Float = 0F,
     val scalaOffsetActive: Boolean = false,
@@ -38,6 +41,7 @@ data class GuessIronUiState(
     val measuredDistance: Float = 0F,
     val endlessValue: Float = 0F,
     val unitSystem: IUnitsystem = UnitSystemBaseMetric(),
+    val measuerButtonFunction: MeasureButtonFunction = MeasureButtonFunction.NOT_SET,
     val scalaOffsetAnimation: AnimationSpec<Float> = snap(),
     val sizeInPixel: Int = 0,
     val sizeInDistance: Float = 0F,
@@ -59,7 +63,7 @@ class GuessIronViewModel(
 
     private val unitsystemConverter = UnitsystemConverter()
 
-    private val _uiState = MutableStateFlow(GuessIronUiState(scalaDirection = ScalaDirection.Top))
+    private val _uiState = MutableStateFlow(GuessIronUiState())
     val uiState: StateFlow<GuessIronUiState> = _uiState.asStateFlow()
 
     val dataState: StateFlow<GuessIronDataState> = guessIronDataRepository.guessIronDataFlow
@@ -77,6 +81,15 @@ class GuessIronViewModel(
 
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, GuessIronDataState())
+
+    fun validateProtoBuf(){
+            viewModelScope.launch {
+                val data = guessIronDataRepository.guessIronDataFlow.first()
+
+                if (data.version == 0)
+                    guessIronDataRepository.upgradeValues(1)
+            }
+    }
 
     private fun copyValuesToUiState(item: GuessIronData) {
         val scalaDirection = ScalaDirection.values().first { it.value == item.scalaDirection }
@@ -98,6 +111,7 @@ class GuessIronViewModel(
             val offset = if (item.scalaOffsetActive)item.displayBorder.top + item.displayBorder.bottom else 0
 
             currentState.copy(
+                version = item.version,
                 disclaimerDisabled = item.disclaimerDisabled,
                 endlessAutomaticInfoDisabled = item.automacticSetting.disableInfo,
                 endlessMeasureHowToDisabled = item.howToEndlessDisabled,
@@ -112,6 +126,7 @@ class GuessIronViewModel(
                 measuredPixel = convertDistanceToPixel(measuredDistanceWithOffset),
                 measuredDistance = unitsystemConverter.convert(currentState.measuredDistance, currentState.unitSystem, newUnitsystem),
                 unitSystem = newUnitsystem,
+                measuerButtonFunction = item.measureButtonFunction,
                 scalaOffsetAnimation = snap(),
                 sizeInDistance = convertPixelToDistance(currentState.sizeInPixel.toFloat(), offset.toFloat()),
                 endlessAutomaticSensitivity = if ( item.automacticSetting.sensitivity > 0 ) item.automacticSetting.sensitivity else currentState.endlessAutomaticSensitivity,
@@ -157,6 +172,10 @@ class GuessIronViewModel(
             .build()
 
         guessIronDataRepository.changeUnitsystem(unitSystem, newDisplayBorder)
+    }
+
+    suspend fun changeMeasureButtonFunction(measureButtonFunction: MeasureButtonFunction) {
+        guessIronDataRepository.changeMeasureButtonFunction(measureButtonFunction)
     }
 
     suspend fun toggleScalaOffset(toggleScalaOffset: Boolean) {
@@ -326,7 +345,10 @@ class GuessIronViewModel(
                 measuredPixel = measuredPixelOnScala,
                 measuredDistance = convertPixelToDistance(
                     measuredPixelOnScala,
-                    currentState.scalaOffset
+                    getCurrentScalaOffset(
+                        currentState.scalaOffsetActive,
+                        currentState.scalaOffset
+                    )
                 )
             )
         }
@@ -335,8 +357,6 @@ class GuessIronViewModel(
     fun setMeasuredValue(distance: Float, unit: String) {
 
         val unitWithDefault = if (unit == "") "mm" else unit
-
-
 
         val distanceInCurrentUnit = if ( _uiState.value.unitSystem.getUnit() != unitWithDefault){
             val sourceUnitsystem = unitsystemConverter.getUnitsystemFromUnit(unitWithDefault)

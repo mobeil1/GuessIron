@@ -26,10 +26,16 @@ enum UnitSystem {
   ANT = 3;
 }
 
+enum MeasureButtonFunction {
+  NOT_SET = 0;
+  SAVE = 1;
+  RESET = 2;
+}
+
 message MeasuredValue {
   string name = 1;
   string timestamp = 2;
-  int32 measured = 3;
+  int32 measured = 3 [deprecated = true];
   enum MeasureType {
     Single = 0;
     Endless = 1;
@@ -82,5 +88,9 @@ message GuessIronData {
   AutomaticSetting automacticSetting = 10;
 
   UnitSystem unitSystem = 11;
+
+  int32 version = 12;
+
+  MeasureButtonFunction measureButtonFunction = 13;
 
 }

@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoMode
 import androidx.compose.material.icons.filled.Dock
 import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Save
@@ -137,6 +138,7 @@ fun GuessIronScreen(
     onConfigEndlessAutomatic: () -> Unit,
     viewModel: GuessIronViewModel = viewModel(),
     onConfigUnitsystem: () -> Unit,
+    onShowConfigMeasureButton: () -> Unit,
 ) {
 
     val guessIronState by viewModel.uiState.collectAsState()
@@ -302,6 +304,14 @@ fun GuessIronScreen(
                             scope,
                             viewModel,
                             true,
+                            measureButtonFunction = {
+                                doMeasureButtonClick(
+                                    guessIronState,
+                                    onShowConfigMeasureButton,
+                                    showSaveDialog = { showSaveDialog = true },
+                                    viewModel
+                                )
+                            },
                             showConfigureDisplayBorder = {
                                 showConfigureDisplayBorder = true
                             },
@@ -335,6 +345,14 @@ fun GuessIronScreen(
                         scope,
                         viewModel,
                         false,
+                        measureButtonFunction = {
+                            doMeasureButtonClick(
+                                guessIronState,
+                                onShowConfigMeasureButton,
+                                showSaveDialog = { showSaveDialog = true },
+                                viewModel
+                            )
+                        },
                         showConfigureDisplayBorder = {
                             showConfigureDisplayBorder = true
                         },
@@ -390,12 +408,16 @@ fun GuessIronScreen(
                 onShowConfigEndlessAutomatic = {
                     showMoreMenu = false
                     onConfigEndlessAutomatic()
+                },
+                onShowConfigUnitsystem = {
+                    showMoreMenu = false
+                    onConfigUnitsystem()
+                },
+                onShowConfigMeasureButton = {
+                    showMoreMenu = false
+                    onShowConfigMeasureButton()
                 }
-
-            ) {
-                showMoreMenu = false
-                onConfigUnitsystem()
-            }
+            )
         }
 
         SnackbarMeasured(snackbarHostState, onClickShowMeasured)
@@ -544,6 +566,25 @@ fun GuessIronScreen(
     }
 }
 
+
+private fun doMeasureButtonClick(
+    guessIronState: GuessIronUiState,
+    onShowConfigMeasureButton: () -> Unit,
+    showSaveDialog: () -> Unit,
+    viewModel: GuessIronViewModel
+) {
+    when (guessIronState.measuerButtonFunction) {
+        MeasureButtonFunction.NOT_SET -> onShowConfigMeasureButton()
+        MeasureButtonFunction.SAVE -> showSaveDialog()
+        MeasureButtonFunction.RESET -> viewModel.setMeasuredValue(
+            0.0F,
+            guessIronState.unitSystem.getUnit()
+        )
+
+        MeasureButtonFunction.UNRECOGNIZED -> onShowConfigMeasureButton()
+    }
+}
+
 @Composable
 private fun MainMenu(
     guessIronState: GuessIronUiState,
@@ -551,12 +592,13 @@ private fun MainMenu(
     scope: CoroutineScope,
     viewModel: GuessIronViewModel,
     isLandsacpe: Boolean,
+    measureButtonFunction: () -> Unit,
     showConfigureDisplayBorder: () -> Unit,
     showMeasureToEdgeNotSupported: () -> Unit,
     showHowToEndless: () -> Unit,
     showMoreMenu: () -> Unit
 ) {
-    Button(modifier = Modifier.padding(top = 6.dp), onClick = {}) {
+    Button(modifier = Modifier.padding(top = 6.dp), onClick = measureButtonFunction) {
 
         if (guessIronState.scalaDirection == ScalaDirection.Center) {
             val centerValue = guessIronState.measuredDistance / 2
@@ -579,7 +621,16 @@ private fun MainMenu(
         },
         onClickAddScalaOffset = {
 
-            if (guessIronState.scalaDirection != ScalaDirection.Center && !guessIronState.scalaOffsetActive && guessIronState.scalaOffset == 0F) {
+            val displayBorderInvalid = (guessIronState.scalaDirection != ScalaDirection.Center && !guessIronState.scalaOffsetActive && guessIronState.scalaOffset == 0F) ||
+                    guessIronState.version == 0
+
+            if (guessIronState.version == 0){
+                scope.launch {
+                    viewModel.changeDisplayBorder(0F, 0F)
+                }
+            }
+
+            if (displayBorderInvalid) {
                 showConfigureDisplayBorder()
             } else {
                 acc.deactivateAutomatic()
@@ -1084,7 +1135,8 @@ private fun MoreMenu(
     onShowCalibration: () -> Unit,
     onShowScreenBorder: () -> Unit,
     onShowConfigEndlessAutomatic: () -> Unit,
-    onShowConfigUnitsystem: () -> Unit
+    onShowConfigUnitsystem: () -> Unit,
+    onShowConfigMeasureButton: () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss) {
 
@@ -1105,6 +1157,7 @@ private fun MoreMenu(
                 MoreMenuItem(onClickable = onShowScreenBorder, icon = Icons.Filled.Dock, text = stringResource(id = R.string.ScreenMargin))
                 MoreMenuItem(onClickable = onShowConfigEndlessAutomatic, icon = Icons.Filled.AutoMode, text = stringResource(id = R.string.AutomaticSetting))
                 MoreMenuItem(onClickable = onShowConfigUnitsystem, icon = Icons.Filled.Equalizer, text = stringResource(id = R.string.Unitsystem))
+                MoreMenuItem(onClickable = onShowConfigMeasureButton, icon = Icons.Filled.Pin, text = stringResource(id = R.string.FunctionMeasureButtton))
             }
         }
     }

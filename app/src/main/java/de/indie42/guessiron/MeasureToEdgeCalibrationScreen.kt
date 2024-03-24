@@ -125,7 +125,7 @@ fun MeasureToEdgeCalibrationScreen(
     val configuration = LocalConfiguration.current
     val isLandsacpe = Configuration.ORIENTATION_LANDSCAPE == configuration.orientation
 
-    val winInsetsSystembars = dynamicSystemBar(isLandsacpe)
+    val winInsetsSystembars = dynamicSystemBar(true)
 
     var displayRotation by remember { mutableIntStateOf(android.view.Surface.ROTATION_0)}
 

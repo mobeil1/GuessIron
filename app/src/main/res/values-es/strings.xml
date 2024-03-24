@@ -116,9 +116,12 @@
   <string name="SettlingTime">Tiempo de asentamiento</string>
   <string name="SettlingTimeInfo">El tiempo de asentamiento indica cuánto tiempo debe mantenerse quieto el móvil para que la escala se desplace después de un movimiento.</string>
   <string name="EndlessAutomaticInfoTurnOff">Para que el sistema automático no interfiera en el funcionamiento de GuessIron, se desconecta cuando ya no es necesario.</string>
-
   <string name="Unitsystem">Unidad</string>
   <string name="Metric">Milímetro</string>
   <string name="Imperial">Inch</string>
+
+  <string name="FunctionMeasureButtton">botón valor medido</string>
+  <string name="ResetToZero">a cero</string>
+  <string name="FuctionMeasureButtonInfo">Configurar el comportamiento del botón de valor medido</string>
 
 </resources>
