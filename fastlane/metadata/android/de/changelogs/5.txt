@@ -1,0 +1,5 @@
+Breaking changes:
+Die Einstellung der Bildschirmränder war nicht korrekt. Bitte die Bildschirmränder erneut einstellen
+Neu:
+Die Funktion des Messwertknopfes kann eingestellt werden
+Einheitensystem mm oder in eistellbar
