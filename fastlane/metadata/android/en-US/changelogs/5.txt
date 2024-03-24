@@ -1,5 +1,5 @@
 Breaking changes:
-The screen borders were not set correctly. Please set the screen borders again
+The screen borders were not set correctly. Please configure the screen borders again
 New:
 The function of the measurement button can be set
-Unit system mm or in adjustable
+Configure Unit system mm or in
